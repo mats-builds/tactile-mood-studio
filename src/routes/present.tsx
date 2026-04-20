@@ -14,7 +14,7 @@ import { useSelection } from "@/store/selection";
 import { useUserProducts } from "@/store/user-products";
 import { RoomScene } from "@/components/RoomScene";
 
-export const Route = createFileRoute("/moodboard/present")({
+export const Route = createFileRoute("/present")({
   component: PresentPage,
   head: () => ({
     meta: [

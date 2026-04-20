@@ -9,10 +9,15 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as PresentRouteImport } from './routes/present'
 import { Route as MoodboardRouteImport } from './routes/moodboard'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as MoodboardPresentRouteImport } from './routes/moodboard.present'
 
+const PresentRoute = PresentRouteImport.update({
+  id: '/present',
+  path: '/present',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MoodboardRoute = MoodboardRouteImport.update({
   id: '/moodboard',
   path: '/moodboard',
@@ -23,43 +28,46 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const MoodboardPresentRoute = MoodboardPresentRouteImport.update({
-  id: '/present',
-  path: '/present',
-  getParentRoute: () => MoodboardRoute,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/moodboard': typeof MoodboardRouteWithChildren
-  '/moodboard/present': typeof MoodboardPresentRoute
+  '/moodboard': typeof MoodboardRoute
+  '/present': typeof PresentRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/moodboard': typeof MoodboardRouteWithChildren
-  '/moodboard/present': typeof MoodboardPresentRoute
+  '/moodboard': typeof MoodboardRoute
+  '/present': typeof PresentRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/moodboard': typeof MoodboardRouteWithChildren
-  '/moodboard/present': typeof MoodboardPresentRoute
+  '/moodboard': typeof MoodboardRoute
+  '/present': typeof PresentRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/moodboard' | '/moodboard/present'
+  fullPaths: '/' | '/moodboard' | '/present'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/moodboard' | '/moodboard/present'
-  id: '__root__' | '/' | '/moodboard' | '/moodboard/present'
+  to: '/' | '/moodboard' | '/present'
+  id: '__root__' | '/' | '/moodboard' | '/present'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  MoodboardRoute: typeof MoodboardRouteWithChildren
+  MoodboardRoute: typeof MoodboardRoute
+  PresentRoute: typeof PresentRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/present': {
+      id: '/present'
+      path: '/present'
+      fullPath: '/present'
+      preLoaderRoute: typeof PresentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/moodboard': {
       id: '/moodboard'
       path: '/moodboard'
@@ -74,32 +82,23 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/moodboard/present': {
-      id: '/moodboard/present'
-      path: '/present'
-      fullPath: '/moodboard/present'
-      preLoaderRoute: typeof MoodboardPresentRouteImport
-      parentRoute: typeof MoodboardRoute
-    }
   }
 }
 
-interface MoodboardRouteChildren {
-  MoodboardPresentRoute: typeof MoodboardPresentRoute
-}
-
-const MoodboardRouteChildren: MoodboardRouteChildren = {
-  MoodboardPresentRoute: MoodboardPresentRoute,
-}
-
-const MoodboardRouteWithChildren = MoodboardRoute._addFileChildren(
-  MoodboardRouteChildren,
-)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  MoodboardRoute: MoodboardRouteWithChildren,
+  MoodboardRoute: MoodboardRoute,
+  PresentRoute: PresentRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
