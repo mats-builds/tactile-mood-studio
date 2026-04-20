@@ -11,6 +11,7 @@ import {
   type Scene,
 } from "@/data/catalog";
 import { useSelection } from "@/store/selection";
+import { useUserProducts } from "@/store/user-products";
 import { RoomScene } from "@/components/RoomScene";
 
 export const Route = createFileRoute("/moodboard")({
@@ -26,11 +27,14 @@ export const Route = createFileRoute("/moodboard")({
 function MoodboardPage() {
   const navigate = useNavigate();
   const { ids, paletteId, setPaletteId, sceneId, setSceneId, toggle } = useSelection();
+  const { products: userProducts } = useUserProducts();
 
-  const items = useMemo(
-    () => ids.map((id) => catalog.find((p) => p.id === id)).filter(Boolean) as typeof catalog,
-    [ids],
-  );
+  const items = useMemo(() => {
+    const merged = [...userProducts, ...catalog];
+    return ids
+      .map((id) => merged.find((p) => p.id === id))
+      .filter(Boolean) as typeof catalog;
+  }, [ids, userProducts]);
 
   const aiPalette = useMemo(() => generateAIPalette(ids), [ids]);
   const [aiNonce, setAiNonce] = useState(0);
