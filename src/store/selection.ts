@@ -92,6 +92,28 @@ export const selectionStore = {
     persist();
     emit();
   },
+  getLayout: () => layout,
+  setLayoutFor(id: string, patch: Partial<LayoutOverride>) {
+    hydrate();
+    layout = { ...layout, [id]: { ...layout[id], ...patch } };
+    persist();
+    emit();
+  },
+  resetLayoutFor(id: string) {
+    hydrate();
+    if (!layout[id]) return;
+    const next = { ...layout };
+    delete next[id];
+    layout = next;
+    persist();
+    emit();
+  },
+  resetAllLayout() {
+    hydrate();
+    layout = {};
+    persist();
+    emit();
+  },
   subscribe(l: Listener) {
     listeners.add(l);
     return () => {
@@ -120,5 +142,10 @@ export function useSelection() {
     setPaletteId: (id: string | null) => selectionStore.setPaletteId(id),
     sceneId: selectionStore.getSceneId(),
     setSceneId: (id: string | null) => selectionStore.setSceneId(id),
+    layout: selectionStore.getLayout(),
+    setLayoutFor: (id: string, patch: Partial<LayoutOverride>) =>
+      selectionStore.setLayoutFor(id, patch),
+    resetLayoutFor: (id: string) => selectionStore.resetLayoutFor(id),
+    resetAllLayout: () => selectionStore.resetAllLayout(),
   };
 }
