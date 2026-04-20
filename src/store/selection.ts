@@ -11,6 +11,10 @@ export type LayoutOverride = {
   yPct?: number;
   /** scale multiplier applied on top of dimension-derived size */
   scale?: number;
+  /** horizontally flipped */
+  flipX?: boolean;
+  /** stacking order; higher renders in front. Default 0. */
+  z?: number;
 };
 
 export type LayoutMap = Record<string, LayoutOverride>;
