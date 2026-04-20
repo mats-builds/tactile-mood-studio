@@ -29,14 +29,18 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
+      { title: "Supermoods" },
+      { name: "description", content: "Supermoods is an interior design app for creating and visualizing mood boards." },
       { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { property: "og:title", content: "Supermoods" },
+      { property: "og:description", content: "Supermoods is an interior design app for creating and visualizing mood boards." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "Supermoods" },
+      { name: "twitter:description", content: "Supermoods is an interior design app for creating and visualizing mood boards." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/75a862a7-d56f-4e15-9192-0142fbb160a7/id-preview-65a3fdc9--7a7fe0af-9b94-4c45-aaab-594bea8eebc8.lovable.app-1776686420293.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/75a862a7-d56f-4e15-9192-0142fbb160a7/id-preview-65a3fdc9--7a7fe0af-9b94-4c45-aaab-594bea8eebc8.lovable.app-1776686420293.png" },
     ],
     links: [
       {
