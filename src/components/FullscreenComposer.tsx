@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
-import { X, Search, Sparkles, RefreshCw, Plus, Minus } from "lucide-react";
+import { X, Search, Sparkles, RefreshCw, Plus, Minus, PanelLeftClose, PanelLeftOpen, Image as ImageIcon } from "lucide-react";
 import {
   catalog,
   colorMap,
@@ -37,6 +37,7 @@ export function FullscreenComposer({ open, onClose }: Props) {
   const [panel, setPanel] = useState<"library" | "scene" | "palette" | null>(
     "library",
   );
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   // Lock body scroll when open
   useEffect(() => {
@@ -86,14 +87,19 @@ export function FullscreenComposer({ open, onClose }: Props) {
   return (
     <div className="fixed inset-0 z-[100] flex bg-background text-foreground">
       {/* Library sidebar */}
+      {sidebarOpen && (
       <aside className="flex w-[280px] shrink-0 flex-col border-r border-border/60 bg-background">
         <div className="flex items-center justify-between px-5 pb-3 pt-5">
           <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
-            Library
+            Library · {filtered.length}
           </p>
-          <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-            {filtered.length}
-          </span>
+          <button
+            onClick={() => setSidebarOpen(false)}
+            aria-label="Collapse library"
+            className="inline-flex h-7 w-7 items-center justify-center rounded-full text-ink hover:bg-secondary"
+          >
+            <PanelLeftClose size={14} />
+          </button>
         </div>
         <div className="px-5 pb-3">
           <div className="flex items-center gap-2 rounded-full border border-border bg-secondary/40 px-3 py-2">
@@ -153,6 +159,7 @@ export function FullscreenComposer({ open, onClose }: Props) {
           </ul>
         </div>
       </aside>
+      )}
 
       {/* Stage */}
       <div className="relative flex flex-1 flex-col">
