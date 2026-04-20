@@ -213,8 +213,26 @@ export function AddWithUrlDialog({
                 </div>
               )}
               <div>
+                <div className="mb-2">
+                  <span className="mb-1 block text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+                    Section
+                  </span>
+                  <select
+                    value={draft.category}
+                    onChange={(e) =>
+                      setDraft({ ...draft, category: e.target.value as Category })
+                    }
+                    className="w-full rounded-xl border border-border bg-card px-3 py-2 text-sm text-ink focus:border-ink focus:outline-none"
+                  >
+                    {VALID_CATEGORIES.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                </div>
                 <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
-                  {draft.category} · {draft.maker}
+                  {draft.maker}
                 </p>
                 <h3 className="mt-1 font-serif text-xl text-ink">{draft.name}</h3>
                 <p className="mt-1 text-sm text-rust">{draft.price}</p>
