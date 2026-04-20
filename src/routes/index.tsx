@@ -228,6 +228,14 @@ function CatalogPage() {
           </Link>
         </div>
       </div>
+
+      <ProductDetail
+        product={active}
+        open={active !== null}
+        onOpenChange={(o) => !o && setActive(null)}
+        selected={active ? has(active.id) : false}
+        onToggle={toggle}
+      />
     </main>
   );
 }
