@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { ArrowLeft, Sparkles, RefreshCw, Plus, Pencil, Check, RotateCcw } from "lucide-react";
+import { ArrowLeft, Sparkles, RefreshCw, Plus, Pencil, Check, RotateCcw, ImagePlus } from "lucide-react";
 import {
   catalog,
   colorMap,
@@ -13,6 +13,7 @@ import {
 import { useSelection } from "@/store/selection";
 import { useUserProducts } from "@/store/user-products";
 import { RoomScene } from "@/components/RoomScene";
+import { MatchFromImageDialog } from "@/components/MatchFromImageDialog";
 
 export const Route = createFileRoute("/moodboard")({
   component: MoodboardPage,
@@ -40,6 +41,7 @@ function MoodboardPage() {
   } = useSelection();
   const { products: userProducts } = useUserProducts();
   const [editMode, setEditMode] = useState(false);
+  const [matchOpen, setMatchOpen] = useState(false);
 
   const items = useMemo(() => {
     const merged = [...userProducts, ...catalog];
@@ -77,12 +79,25 @@ function MoodboardPage() {
             Browse the catalog and tap the + on anything you love. Then come back
             to compose your room.
           </p>
-          <Link
-            to="/"
-            className="mt-8 inline-flex items-center gap-2 rounded-full bg-ink px-5 py-2.5 text-sm text-background"
-          >
-            <ArrowLeft size={16} /> Back to catalog
-          </Link>
+          <div className="mt-8 flex flex-col items-center gap-3">
+            <button
+              onClick={() => setMatchOpen(true)}
+              className="inline-flex items-center gap-2 rounded-full bg-rust px-5 py-2.5 text-sm text-primary-foreground transition-transform hover:scale-[1.02]"
+            >
+              <ImagePlus size={16} /> Match from an image
+            </button>
+            <Link
+              to="/"
+              className="inline-flex items-center gap-2 rounded-full bg-ink px-5 py-2.5 text-sm text-background"
+            >
+              <ArrowLeft size={16} /> Back to catalog
+            </Link>
+          </div>
+          <MatchFromImageDialog
+            open={matchOpen}
+            onOpenChange={setMatchOpen}
+            onMatched={() => setEditMode(true)}
+          />
         </div>
       </main>
     );
