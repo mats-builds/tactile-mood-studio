@@ -56,7 +56,9 @@ export const selectionStore = {
   },
   subscribe(l: Listener) {
     listeners.add(l);
-    return () => listeners.delete(l);
+    return () => {
+      listeners.delete(l);
+    };
   },
 };
 
@@ -65,7 +67,7 @@ export function useSelection() {
   useEffect(() => {
     const unsub = selectionStore.subscribe(() => force((n) => n + 1));
     return () => {
-      unsub;
+      unsub();
     };
   }, []);
   return {
