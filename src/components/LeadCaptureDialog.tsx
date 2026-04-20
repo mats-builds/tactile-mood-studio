@@ -102,7 +102,7 @@ export function LeadCaptureDialog({
             type="submit"
             className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-rust px-5 py-2.5 text-sm font-medium text-primary-foreground transition-transform hover:scale-[1.01]"
           >
-            See my presentation <ArrowRight size={14} />
+            Send it to me <ArrowRight size={14} />
           </button>
 
           <p className="text-[10px] leading-relaxed text-muted-foreground">
