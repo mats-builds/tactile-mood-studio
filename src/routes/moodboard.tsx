@@ -45,6 +45,15 @@ function MoodboardPage() {
   const [editMode, setEditMode] = useState(false);
   const [matchOpen, setMatchOpen] = useState(false);
   const [fullOpen, setFullOpen] = useState(false);
+  const [leadOpen, setLeadOpen] = useState(false);
+
+  const handleFinish = () => {
+    if (getStoredLead()) {
+      navigate({ to: "/present" });
+    } else {
+      setLeadOpen(true);
+    }
+  };
 
   const items = useMemo(() => {
     const merged = [...userProducts, ...catalog];
