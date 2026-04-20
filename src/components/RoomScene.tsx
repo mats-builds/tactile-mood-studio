@@ -83,6 +83,12 @@ export function RoomScene({
   onResetItem,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  // Clear selection when leaving edit mode
+  useEffect(() => {
+    if (!editMode) setSelectedId(null);
+  }, [editMode]);
 
   // Compute per-item index within its role group for default placement
   const placement = useMemo(() => {
@@ -117,6 +123,10 @@ export function RoomScene({
         editMode ? "ring-2 ring-rust/60" : ""
       }`}
       style={bgStyle}
+      onPointerDown={(e) => {
+        // click on empty area clears selection
+        if (editMode && e.target === e.currentTarget) setSelectedId(null);
+      }}
     >
       {scene.kind === "image" && scene.src && (
         <img
@@ -184,6 +194,8 @@ export function RoomScene({
             heightPct={heightPct}
             scale={scale}
             editMode={editMode}
+            selected={selectedId === item.id}
+            onSelect={() => setSelectedId(item.id)}
             containerRef={containerRef}
             onRemove={onRemove}
             onLayoutChange={onLayoutChange}
