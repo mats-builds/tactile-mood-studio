@@ -267,12 +267,12 @@ function Piece({
   onRemove?: (id: string) => void;
 }) {
   return (
-    <div className="group/piece absolute" style={style}>
+    <div className="group/piece absolute flex items-end justify-center" style={style}>
       <img
         src={product.src}
         alt={product.name}
         loading="lazy"
-        className="h-auto w-full object-contain drop-shadow-[0_30px_25px_oklch(0.22_0.02_50_/_0.32)] transition-transform duration-500 group-hover/piece:-translate-y-1 group-hover/piece:scale-[1.04]"
+        className="h-full max-h-full w-full object-contain object-bottom drop-shadow-[0_22px_22px_oklch(0.22_0.02_50_/_0.35)] transition-transform duration-500 group-hover/piece:-translate-y-1 group-hover/piece:scale-[1.04]"
       />
       {onRemove && (
         <button
