@@ -166,6 +166,15 @@ export function FullscreenComposer({ open, onClose }: Props) {
         {/* Top bar */}
         <div className="flex items-center justify-between border-b border-border/60 px-6 py-3">
           <div className="flex items-center gap-3">
+            {!sidebarOpen && (
+              <button
+                onClick={() => setSidebarOpen(true)}
+                aria-label="Open library"
+                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5 text-[10px] uppercase tracking-[0.2em] text-ink hover:bg-secondary"
+              >
+                <PanelLeftOpen size={12} /> Library
+              </button>
+            )}
             <span className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
               Composer · Fullscreen
             </span>
@@ -179,11 +188,13 @@ export function FullscreenComposer({ open, onClose }: Props) {
               active={panel === "scene"}
               onClick={() => setPanel(panel === "scene" ? null : "scene")}
               label="Backdrop"
+              icon={<ImageIcon size={11} />}
             />
             <PanelToggle
               active={panel === "palette"}
               onClick={() => setPanel(panel === "palette" ? null : "palette")}
               label="Palette"
+              icon={<Sparkles size={11} />}
             />
             <button
               onClick={onClose}
