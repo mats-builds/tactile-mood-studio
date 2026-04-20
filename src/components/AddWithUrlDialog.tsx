@@ -66,34 +66,28 @@ export function AddWithUrlDialog({
     setStatus("loading");
     setError(null);
     try {
-      const raw = (await scrapeProduct({ data: { url: url.trim() } })) as Record<
-        string,
-        unknown
-      >;
-      const name = String(raw.name ?? "Untitled piece");
+      const raw = await scrapeProduct({ data: { url: url.trim() } });
+      const name = raw.name ?? "Untitled piece";
       const cat = (raw.category as Category) || "Decor";
       const role = (raw.role as Role) || "ground";
       const product: Product = {
         id: `user-${slugify(name)}-${Date.now().toString(36)}`,
         name,
-        maker: String(raw.maker ?? "—"),
-        price: String(raw.price ?? "—"),
+        maker: raw.maker ?? "—",
+        price: raw.price ?? "—",
         category: VALID_CATEGORIES.includes(cat) ? cat : "Decor",
         role: VALID_ROLES.includes(role) ? role : "ground",
-        src: String(raw.image_url ?? ""),
+        src: raw.image_url ?? "",
         colors: ["linen", "cream"],
-        description:
-          typeof raw.description === "string" ? raw.description : undefined,
-        gallery: Array.isArray(raw.gallery)
-          ? (raw.gallery as unknown[]).map(String).slice(0, 4)
-          : undefined,
-        sourceUrl: typeof raw.sourceUrl === "string" ? raw.sourceUrl : url.trim(),
+        description: raw.description,
+        gallery: raw.gallery,
+        sourceUrl: raw.sourceUrl ?? url.trim(),
         dims:
-          typeof raw.width_cm === "number" || typeof raw.height_cm === "number"
+          raw.width_cm !== undefined || raw.height_cm !== undefined
             ? {
-                w: Number(raw.width_cm) || 100,
-                h: Number(raw.height_cm) || 80,
-                d: typeof raw.depth_cm === "number" ? Number(raw.depth_cm) : undefined,
+                w: raw.width_cm ?? 100,
+                h: raw.height_cm ?? 80,
+                d: raw.depth_cm,
               }
             : undefined,
       };
