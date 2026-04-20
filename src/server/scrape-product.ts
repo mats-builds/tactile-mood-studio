@@ -37,12 +37,13 @@ const productSchema = {
     image_url: {
       type: "string",
       description:
-        "URL of the cleanest product image, preferably on a white or transparent background",
+        "URL of the cleanest packshot / showcase image of the product — MUST be the version with a plain white, light grey or transparent background (no room scene, no model, no lifestyle context). Pick the one that looks like a catalog cutout. Avoid lifestyle / in-context shots here.",
     },
     gallery: {
       type: "array",
       items: { type: "string" },
-      description: "Up to 4 additional product images (in-context / lifestyle)",
+      description:
+        "Up to 4 additional product images — lifestyle / in-context shots are fine here.",
     },
   },
   required: ["name", "image_url"],
