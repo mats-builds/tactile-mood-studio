@@ -5,6 +5,7 @@ const KEY = "moods.userProducts.v1";
 type Listener = () => void;
 const listeners = new Set<Listener>();
 let products: Product[] = [];
+let hydrated = false;
 
 function load() {
   if (typeof window === "undefined") return;
@@ -15,7 +16,12 @@ function load() {
     /* ignore */
   }
 }
-load();
+
+function hydrate() {
+  if (hydrated || typeof window === "undefined") return;
+  hydrated = true;
+  load();
+}
 
 function persist() {
   if (typeof window === "undefined") return;
@@ -26,14 +32,17 @@ function emit() {
 }
 
 export const userProductsStore = {
+  hydrate,
   list: () => products,
   add(p: Product) {
+    hydrate();
     // de-dupe by id
     products = [p, ...products.filter((x) => x.id !== p.id)];
     persist();
     emit();
   },
   remove(id: string) {
+    hydrate();
     products = products.filter((p) => p.id !== id);
     persist();
     emit();
@@ -49,6 +58,7 @@ export const userProductsStore = {
 export function useUserProducts() {
   const [, force] = useState(0);
   useEffect(() => {
+    userProductsStore.hydrate();
     force((n) => n + 1);
     const unsub = userProductsStore.subscribe(() => force((n) => n + 1));
     return () => {
