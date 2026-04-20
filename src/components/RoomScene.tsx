@@ -216,6 +216,8 @@ type PieceProps = {
   heightPct: number;
   scale: number;
   editMode: boolean;
+  selected: boolean;
+  onSelect: () => void;
   containerRef: React.RefObject<HTMLDivElement | null>;
   onRemove?: (id: string) => void;
   onLayoutChange?: (id: string, patch: Partial<LayoutOverride>) => void;
@@ -231,6 +233,8 @@ function Piece({
   heightPct,
   scale,
   editMode,
+  selected,
+  onSelect,
   containerRef,
   onRemove,
   onLayoutChange,
