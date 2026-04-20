@@ -217,6 +217,8 @@ type PieceProps = {
   widthPct: number;
   heightPct: number;
   scale: number;
+  flipX: boolean;
+  zOrder: number;
   editMode: boolean;
   selected: boolean;
   onSelect: () => void;
@@ -234,6 +236,8 @@ function Piece({
   widthPct,
   heightPct,
   scale,
+  flipX,
+  zOrder,
   editMode,
   selected,
   onSelect,
