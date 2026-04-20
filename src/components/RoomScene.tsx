@@ -138,20 +138,37 @@ export function RoomScene({ items, palette, scene, onRemove }: Props) {
         );
       })}
 
-      {/* FLOOR: rug — large, centered, low */}
+      {/* FLOOR: rug — flat on the floor, squashed via Y-scale to simulate perspective */}
       {groups.floor.map((p) => (
-        <Piece
+        <div
           key={p.id}
-          product={p}
-          onRemove={onRemove}
+          className="group/piece absolute"
           style={{
             left: "50%",
-            bottom: "4%",
-            width: "62%",
+            bottom: "2%",
+            width: "55%",
+            height: "22%",
             transform: "translateX(-50%)",
             zIndex: 20,
           }}
-        />
+        >
+          <img
+            src={p.src}
+            alt={p.name}
+            loading="lazy"
+            className="h-full w-full object-cover object-center drop-shadow-[0_18px_18px_oklch(0.22_0.02_50_/_0.35)]"
+            style={{ transform: "perspective(800px) rotateX(58deg)" }}
+          />
+          {onRemove && (
+            <button
+              onClick={() => onRemove(p.id)}
+              aria-label={`Remove ${p.name}`}
+              className="absolute right-2 top-2 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-background/95 text-[11px] text-ink opacity-0 ring-1 ring-border backdrop-blur transition-opacity hover:bg-rust hover:text-primary-foreground group-hover/piece:opacity-100"
+            >
+              ×
+            </button>
+          )}
+        </div>
       ))}
 
       {/* GROUND: sofa, sideboards, big seating — sit ON the rug */}
