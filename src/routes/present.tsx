@@ -73,7 +73,7 @@ function PresentPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[oklch(0.78_0.02_85)] py-10 print:bg-white print:py-0">
+    <main className="min-h-screen bg-[oklch(0.78_0.02_85)] py-10 print:bg-[oklch(0.95_0.012_85)] print:py-0">
       {/* Toolbar — hidden on print */}
       <div className="mx-auto mb-8 flex max-w-[900px] items-center justify-between px-6 print:hidden">
         <Link
