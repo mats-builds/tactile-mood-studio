@@ -242,7 +242,7 @@ function PresentPage() {
                 {items
                   .reduce((sum, p) => {
                     const n = Number(
-                      String(p.price).replace(/[^0-9.,]/g, "").replace(",", "."),
+                      String(p.price).replace(/[^0-9.]/g, ""),
                     );
                     return sum + (isFinite(n) ? n : 0);
                   }, 0)
