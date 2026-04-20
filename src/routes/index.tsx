@@ -11,13 +11,13 @@ export const Route = createFileRoute("/")({
   component: CatalogPage,
   head: () => ({
     meta: [
-      { title: "MOODS — Catalog" },
+      { title: "Supermoods — Catalog" },
       {
         name: "description",
         content:
           "Browse curated furniture, lighting and decor. Add pieces to your board and create a personalized moodboard.",
       },
-      { property: "og:title", content: "MOODS — Catalog" },
+      { property: "og:title", content: "Supermoods — Catalog" },
       {
         property: "og:description",
         content: "Curated furniture catalog for building your moodboard.",
@@ -55,7 +55,7 @@ function CatalogPage() {
         <div className="mx-auto flex max-w-[1500px] items-center justify-between px-6 py-5 md:px-10">
           <SideMenu />
           <Link to="/" className="font-serif text-2xl tracking-display text-ink md:text-3xl">
-            MOODS
+            Supermoods
           </Link>
           <div className="flex items-center gap-2">
             <button

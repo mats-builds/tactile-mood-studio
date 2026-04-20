@@ -44,7 +44,7 @@ export function SideMenu() {
           ) : (
             <>
           <SheetHeader className="border-b border-border/60 px-6 py-5 text-left">
-            <SheetTitle className="font-serif text-2xl text-ink">MOODS</SheetTitle>
+            <SheetTitle className="font-serif text-2xl text-ink">Supermoods</SheetTitle>
             <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
               Compose. Curate. Collect.
             </p>
@@ -108,7 +108,7 @@ export function SideMenu() {
 
           <div className="absolute bottom-6 left-6 right-6">
             <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
-              MOODS · 2026
+              Supermoods · 2026
             </p>
           </div>
             </>

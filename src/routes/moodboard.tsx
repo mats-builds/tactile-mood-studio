@@ -18,7 +18,7 @@ export const Route = createFileRoute("/moodboard")({
   component: MoodboardPage,
   head: () => ({
     meta: [
-      { title: "MOODS — Your Moodboard" },
+      { title: "Supermoods — Your Moodboard" },
       { name: "description", content: "Your curated moodboard — pieces, palette and room." },
     ],
   }),
@@ -88,7 +88,7 @@ function MoodboardPage() {
             <ArrowLeft size={14} /> Catalog
           </Link>
           <Link to="/" className="font-serif text-2xl tracking-display text-ink md:text-3xl">
-            MOODS
+            Supermoods
           </Link>
           <div className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
             {items.length} {items.length === 1 ? "piece" : "pieces"}
