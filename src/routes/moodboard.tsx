@@ -1,36 +1,31 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { ArrowLeft, Sparkles, RefreshCw, Plus, Check } from "lucide-react";
-import { catalog, colorMap, curatedPalettes, generateAIPalette, type Palette } from "@/data/catalog";
+import { ArrowLeft, Sparkles, RefreshCw, Plus } from "lucide-react";
+import {
+  catalog,
+  colorMap,
+  curatedPalettes,
+  generateAIPalette,
+  scenes,
+  type Palette,
+  type Scene,
+} from "@/data/catalog";
 import { useSelection } from "@/store/selection";
+import { RoomScene } from "@/components/RoomScene";
 
 export const Route = createFileRoute("/moodboard")({
   component: MoodboardPage,
   head: () => ({
     meta: [
       { title: "MOODS — Your Moodboard" },
-      { name: "description", content: "Your curated moodboard — pieces, palette and feel." },
+      { name: "description", content: "Your curated moodboard — pieces, palette and room." },
     ],
   }),
 });
 
-// asymmetric collage classes assigned by index for visual interest
-const tileClasses = [
-  "col-span-7 row-span-3 -rotate-1",
-  "col-span-3 row-span-4 rotate-2",
-  "col-span-3 row-span-3 -rotate-2",
-  "col-span-4 row-span-2 rotate-1",
-  "col-span-3 row-span-2",
-  "col-span-2 row-span-4 rotate-2",
-  "col-span-3 row-span-2 -rotate-2",
-  "col-span-2 row-span-2 rotate-3",
-  "col-span-3 row-span-2 -rotate-1",
-  "col-span-4 row-span-2 rotate-1",
-];
-
 function MoodboardPage() {
   const navigate = useNavigate();
-  const { ids, paletteId, setPaletteId, toggle } = useSelection();
+  const { ids, paletteId, setPaletteId, sceneId, setSceneId, toggle } = useSelection();
 
   const items = useMemo(
     () => ids.map((id) => catalog.find((p) => p.id === id)).filter(Boolean) as typeof catalog,
@@ -49,6 +44,9 @@ function MoodboardPage() {
   const activePalette: Palette =
     allPalettes.find((p) => p.id === paletteId) ?? aiPalette;
 
+  const activeScene: Scene =
+    scenes.find((s) => s.id === sceneId) ?? scenes[0];
+
   if (items.length === 0) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-background px-6">
@@ -61,7 +59,7 @@ function MoodboardPage() {
           </h1>
           <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
             Browse the catalog and tap the + on anything you love. Then come back
-            to compose your moodboard.
+            to compose your room.
           </p>
           <Link
             to="/"
@@ -106,8 +104,77 @@ function MoodboardPage() {
         </h1>
       </section>
 
-      {/* Palette picker */}
+      {/* Composed Room Scene */}
       <section className="mx-auto max-w-[1500px] px-6 md:px-10">
+        <RoomScene
+          items={items}
+          palette={activePalette}
+          scene={activeScene}
+          onRemove={toggle}
+        />
+      </section>
+
+      {/* Scene picker */}
+      <section className="mx-auto mt-8 max-w-[1500px] px-6 md:px-10">
+        <div className="rounded-3xl bg-card p-6 shadow-[var(--shadow-soft)] md:p-8">
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <p className="text-[11px] uppercase tracking-display text-muted-foreground">
+                Backdrop
+              </p>
+              <h2 className="mt-2 font-serif text-2xl text-ink">
+                Place it on a palette, or in a real room.
+              </h2>
+            </div>
+          </div>
+
+          <div className="mt-6 grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+            {scenes.map((s) => {
+              const active = activeScene.id === s.id;
+              return (
+                <button
+                  key={s.id}
+                  onClick={() => setSceneId(s.id)}
+                  className={`group overflow-hidden rounded-2xl border text-left transition-all ${
+                    active
+                      ? "border-ink shadow-[var(--shadow-soft)]"
+                      : "border-border hover:border-foreground/40"
+                  }`}
+                >
+                  <div className="relative aspect-[16/10] w-full overflow-hidden bg-secondary">
+                    {s.kind === "image" && s.src ? (
+                      <img
+                        src={s.src}
+                        alt={s.name}
+                        loading="lazy"
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div
+                        className="h-full w-full"
+                        style={{
+                          background: `linear-gradient(180deg, ${colorMap[activePalette.colors[1] ?? "linen"]} 0%, ${colorMap[activePalette.colors[0] ?? "cream"]} 60%, ${colorMap[activePalette.colors[3] ?? "jute"]} 100%)`,
+                        }}
+                      />
+                    )}
+                  </div>
+                  <div className="flex items-center justify-between px-3 py-2">
+                    <span className="font-serif text-base text-ink">{s.name}</span>
+                    {active && (
+                      <span className="text-[10px] uppercase tracking-[0.2em] text-rust">
+                        Active
+                      </span>
+                    )}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* Palette picker */}
+      <section className="mx-auto mt-8 max-w-[1500px] px-6 md:px-10">
         <div className="rounded-3xl bg-card p-6 shadow-[var(--shadow-soft)] md:p-8">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
@@ -160,59 +227,6 @@ function MoodboardPage() {
                 </button>
               );
             })}
-          </div>
-        </div>
-      </section>
-
-      {/* Mood board collage tinted by palette */}
-      <section className="mx-auto mt-8 max-w-[1500px] px-6 md:px-10">
-        <div
-          className="relative overflow-hidden rounded-3xl p-6 shadow-[var(--shadow-soft)] md:p-12"
-          style={{
-            background: `linear-gradient(135deg, ${colorMap[activePalette.colors[1] ?? "linen"]} 0%, ${colorMap[activePalette.colors[0] ?? "cream"]} 60%, ${colorMap[activePalette.colors[2] ?? "travertine"]} 100%)`,
-          }}
-        >
-          {/* corner palette strip */}
-          <div className="absolute right-6 top-6 hidden gap-1 md:flex">
-            {activePalette.colors.map((c, i) => (
-              <div
-                key={i}
-                className="h-8 w-8 rounded-full ring-1 ring-ink/10"
-                style={{ backgroundColor: colorMap[c] }}
-              />
-            ))}
-          </div>
-
-          <p className="text-[11px] uppercase tracking-display text-ink/60">
-            Concept · {activePalette.name}
-          </p>
-
-          <div className="mt-6 grid auto-rows-[68px] grid-cols-10 gap-3 md:gap-4">
-            {items.map((p, i) => (
-              <div
-                key={p.id}
-                className={`group relative ${tileClasses[i % tileClasses.length]}`}
-              >
-                <img
-                  src={p.src}
-                  alt={p.name}
-                  loading="lazy"
-                  className="h-full w-full object-contain drop-shadow-[0_25px_30px_oklch(0.22_0.02_50_/_0.18)] transition-transform duration-500 group-hover:-translate-y-1 group-hover:scale-[1.03]"
-                />
-                <button
-                  onClick={() => toggle(p.id)}
-                  aria-label={`Remove ${p.name}`}
-                  className="absolute right-1 top-1 flex h-7 w-7 items-center justify-center rounded-full bg-background/90 text-ink opacity-0 ring-1 ring-border backdrop-blur transition-opacity hover:bg-rust hover:text-primary-foreground group-hover:opacity-100"
-                >
-                  <Check size={14} strokeWidth={2.4} />
-                </button>
-                <div className="pointer-events-none absolute inset-x-0 bottom-0 translate-y-2 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
-                  <div className="mx-auto w-fit rounded-full bg-ink/90 px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-background backdrop-blur">
-                    {p.name} · {p.price}
-                  </div>
-                </div>
-              </div>
-            ))}
           </div>
         </div>
       </section>
