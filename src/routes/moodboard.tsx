@@ -376,7 +376,7 @@ function MoodboardPage() {
             <ArrowLeft size={16} /> Add more pieces
           </button>
           <button
-            onClick={() => navigate({ to: "/present" })}
+            onClick={handleFinish}
             className="inline-flex items-center gap-2 rounded-full bg-rust px-5 py-2.5 text-sm font-medium text-primary-foreground transition-transform hover:scale-[1.02]"
           >
             <FileText size={14} /> Finish
@@ -385,6 +385,14 @@ function MoodboardPage() {
       </section>
 
       <FullscreenComposer open={fullOpen} onClose={() => setFullOpen(false)} />
+      <LeadCaptureDialog
+        open={leadOpen}
+        onOpenChange={setLeadOpen}
+        onSubmit={() => {
+          setLeadOpen(false);
+          navigate({ to: "/present" });
+        }}
+      />
     </main>
   );
 }
