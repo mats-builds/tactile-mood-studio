@@ -334,13 +334,13 @@ function Piece({
 
   return (
     <div
-      className={`group/piece absolute flex items-end justify-center ${
+      className={`group/piece absolute inline-flex items-end justify-center ${
         editMode ? (selected ? "cursor-move" : "cursor-pointer") : ""
       } ${dragging || resizing ? "z-50" : ""}`}
       style={{
         left: `${localX}%`,
         top: `${localY}%`,
-        width: `${liveWidth}%`,
+        width: "auto",
         height: `${liveHeight}%`,
         transform: "translate(-50%, -100%)",
         zIndex: dragging || resizing ? 100 : selected ? 40 : undefined,
@@ -353,7 +353,7 @@ function Piece({
         alt={product.name}
         loading="lazy"
         draggable={false}
-        className={`h-full max-h-full w-full object-contain object-bottom drop-shadow-[0_22px_22px_oklch(0.22_0.02_50_/_0.35)] transition-transform duration-300 ${
+        className={`h-full w-auto max-w-none object-contain object-bottom drop-shadow-[0_22px_22px_oklch(0.22_0.02_50_/_0.35)] transition-transform duration-300 ${
           !editMode ? "group-hover/piece:-translate-y-1 group-hover/piece:scale-[1.04]" : ""
         } ${isFloor ? "" : ""}`}
         style={
