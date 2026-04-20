@@ -17,7 +17,9 @@ import pampas from "@/assets/pampas.png";
 import ottoman from "@/assets/ottoman.png";
 import shelf from "@/assets/shelf.png";
 import art2 from "@/assets/art2.png";
-import sofaCataline from "@/assets/sofa-cataline.jpg";
+import sofaCataline from "@/assets/sofa-cataline.png";
+import sofaCataline2 from "@/assets/sofa-cataline-2.jpg";
+import sofaCataline3 from "@/assets/sofa-cataline-3.jpg";
 
 export type Category =
   | "Seating"
@@ -57,6 +59,14 @@ export type Product = {
   colors: string[];
   /** decorating role for room composition */
   role: Role;
+  /** optional product detail content for the overlay */
+  description?: string;
+  /** additional gallery images (in-context, lifestyle, alternate angles) */
+  gallery?: string[];
+  /** key/value spec table */
+  details?: Record<string, string>;
+  /** original product page URL */
+  sourceUrl?: string;
 };
 
 /** Color names map to oklch values (used for palette generation) */
