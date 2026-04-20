@@ -67,6 +67,8 @@ type ScrapedProduct = {
 const IMAGE_URL_RE = /https?:\/\/[^\s"'<>]+?\.(?:png|jpe?g|webp|avif)(?:\?[^\s"'<>]*)?/gi;
 const IMAGE_ATTR_RE =
   /(?:src|data-src|data-zoom-image|data-image-large-src|href)=["']([^"']+\.(?:png|jpe?g|webp|avif)(?:\?[^"']*)?)["']/gi;
+const BACKGROUND_REMOVAL_CREDITS_ERROR =
+  "Background removal is unavailable right now because the image credits are exhausted.";
 
 function uniqueStrings(values: Array<string | undefined>) {
   return Array.from(new Set(values.filter((value): value is string => Boolean(value))));
@@ -223,6 +225,9 @@ async function removeBackground(imageUrl: string) {
     });
 
       if (!response.ok) {
+        if (response.status === 402) {
+          throw new Error(BACKGROUND_REMOVAL_CREDITS_ERROR);
+        }
         console.error(
           "removeBackground http error",
           response.status,
@@ -284,9 +289,21 @@ export const scrapeProduct = createServerFn({ method: "POST" })
       (a, b) => scoreImageUrl(b) - scoreImageUrl(a),
     );
     const showcaseImage = allImages[0] ?? firecrawlShowcase;
-    const cleanedShowcase = showcaseImage
-      ? await removeBackground(showcaseImage)
-      : undefined;
+    let cleanedShowcase: string | undefined;
+    if (showcaseImage) {
+      try {
+        cleanedShowcase = await removeBackground(showcaseImage);
+      } catch (err) {
+        if (
+          err instanceof Error &&
+          err.message === BACKGROUND_REMOVAL_CREDITS_ERROR
+        ) {
+          console.warn(err.message);
+        } else {
+          console.error("initial background removal failed", err);
+        }
+      }
+    }
     const gallery = uniqueStrings([
       ...firecrawlGallery,
       ...allImages.filter((url) => url !== showcaseImage),
