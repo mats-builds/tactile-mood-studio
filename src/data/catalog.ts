@@ -76,6 +76,8 @@ export type Product = {
   details?: Record<string, string>;
   /** original product page URL */
   sourceUrl?: string;
+  /** real-world dimensions in cm (used to scale the piece on the moodboard) */
+  dims?: { w: number; h: number; d?: number };
 };
 
 /** Color names map to oklch values (used for palette generation) */
@@ -97,7 +99,7 @@ export const colorMap: Record<string, string> = {
 };
 
 export const catalog: Product[] = [
-  { id: "sofa", name: "Lina Curved Sofa", maker: "Studio Palerma", price: "€ 4,890", category: "Seating", src: sofa, colors: ["rust", "walnut"], role: "ground" },
+  { id: "sofa", name: "Lina Curved Sofa", maker: "Studio Palerma", price: "€ 4,890", category: "Seating", src: sofa, colors: ["rust", "walnut"], role: "ground", dims: { w: 240, h: 82 } },
   {
     id: "sofa-cataline",
     name: "Cataline 3-piece Modular Sofa",
@@ -107,6 +109,7 @@ export const catalog: Product[] = [
     src: sofaCataline,
     colors: ["cream", "linen", "bone"],
     role: "ground",
+    dims: { w: 302, h: 79 },
     gallery: [sofaCataline2, sofaCataline3],
     description:
       "A 3-piece modular sofa with manually adjustable headrests, upholstered in soft beige chenille (water-repellent polyester) over a pine and poplar plywood frame. Dual-density foam (36 + 30 kg/m³) and synthetic fibres deliver an enveloping yet resilient seat. Built for everyday life — modules anchor together, cushion covers unzip, and plastic feet protect the floor.",
@@ -132,6 +135,7 @@ export const catalog: Product[] = [
     src: sofaFogler,
     colors: ["cream", "linen", "bone"],
     role: "ground",
+    dims: { w: 320, h: 75 },
     gallery: [sofaFogler1, sofaFogler2],
     description:
       "A generous 4-piece modular sofa with matching pouf, upholstered in cream beige chenille. Configure the layout to suit your space — the pouf doubles as a chaise extension or standalone seat. Soft, deep seats with a relaxed silhouette built for daily lounging.",
@@ -144,7 +148,7 @@ export const catalog: Product[] = [
     sourceUrl:
       "https://www.sklum.com/nl/kopen-modulaire-vierzitsbanken/157258-4-delige-modulaire-bank-met-poef-fogler.html",
   },
-  { id: "armchair", name: "Cane Sling Chair", maker: "Hanssen Workshop", price: "€ 1,680", category: "Seating", src: armchair, colors: ["walnut", "clay"], role: "ground" },
+  { id: "armchair", name: "Cane Sling Chair", maker: "Hanssen Workshop", price: "€ 1,680", category: "Seating", src: armchair, colors: ["walnut", "clay"], role: "ground", dims: { w: 78, h: 90 } },
   {
     id: "chair-olea",
     name: "Olea Oak Armchair",
@@ -154,6 +158,7 @@ export const catalog: Product[] = [
     src: chairOlea,
     colors: ["walnut", "cream", "linen"],
     role: "ground",
+    dims: { w: 80, h: 76 },
     gallery: [chairOlea1, chairOlea2],
     description:
       "A sculptural armchair with a solid dark oak frame cradling a plush cream bouclé seat and curved back. The exposed wood structure pairs warm tones with soft texture — a tactile statement piece for a reading nook or living room.",
@@ -175,6 +180,7 @@ export const catalog: Product[] = [
     src: chairJolie,
     colors: ["clay", "jute", "walnut"],
     role: "ground",
+    dims: { w: 78, h: 72 },
     gallery: [chairJolie1, chairJolie2],
     description:
       "A rounded, enveloping armchair in wheat brown chenille on a natural wood frame. The barrel-back silhouette and slim wooden legs give it a soft, organic presence that works in modern and rustic interiors alike.",
@@ -187,23 +193,23 @@ export const catalog: Product[] = [
     sourceUrl:
       "https://www.sklum.com/nl/kopen-fauteuils/191900-jolie-chenille-stoffen-fauteuil.html",
   },
-  { id: "loungechair", name: "Bouclé Lounge", maker: "Maison Cru", price: "€ 1,420", category: "Seating", src: loungechair, colors: ["cream", "linen"], role: "ground" },
-  { id: "ottoman", name: "Linen Pouf", maker: "Maison Cru", price: "€ 320", category: "Seating", src: ottoman, colors: ["linen", "bone"], role: "surface" },
-  { id: "table", name: "Oval Travertine Table", maker: "Casa Reni", price: "€ 2,150", category: "Tables", src: table, colors: ["travertine", "bone"], role: "surface" },
-  { id: "sidetable", name: "Stone Side Table", maker: "Casa Reni", price: "€ 690", category: "Tables", src: sidetable, colors: ["travertine", "cream"], role: "surface" },
-  { id: "sideboard", name: "Walnut Sideboard", maker: "Northwood", price: "€ 3,240", category: "Storage", src: sideboard, colors: ["walnut", "rust"], role: "ground" },
-  { id: "shelf", name: "Slim Walnut Shelf", maker: "Northwood", price: "€ 1,980", category: "Storage", src: shelf, colors: ["walnut"], role: "ground" },
-  { id: "lamp", name: "Pleated Floor Lamp", maker: "Brass + Linen Co.", price: "€ 920", category: "Lighting", src: lamp, colors: ["linen", "brass"], role: "standing" },
-  { id: "pendant", name: "Walnut Pendant 02", maker: "Northwood", price: "€ 740", category: "Lighting", src: pendant, colors: ["walnut", "brass"], role: "hanging" },
-  { id: "candles", name: "Brass Candle Trio", maker: "Atelier Dion", price: "€ 240", category: "Lighting", src: candles, colors: ["brass", "gold"], role: "prop" },
-  { id: "vase", name: "Onda Vase, Charcoal", maker: "Ceramica Vera", price: "€ 220", category: "Decor", src: vase, colors: ["charcoal", "ink"], role: "prop" },
-  { id: "pampas", name: "Pampas Arrangement", maker: "Ceramica Vera", price: "€ 180", category: "Decor", src: pampas, colors: ["bone", "jute"], role: "standing" },
-  { id: "books", name: "Linen Library, set of 4", maker: "Atelier Dion", price: "€ 140", category: "Decor", src: books, colors: ["cream", "clay"], role: "prop" },
-  { id: "mirror", name: "Halo Brass Mirror", maker: "Atelier Dion", price: "€ 880", category: "Decor", src: mirror, colors: ["brass", "gold"], role: "wall" },
-  { id: "pillows", name: "Linen Cushions, pair", maker: "Maison Cru", price: "€ 180", category: "Textiles", src: pillows, colors: ["linen", "cream"], role: "prop" },
-  { id: "rug", name: "Hand-woven Jute Rug", maker: "Hanssen Workshop", price: "€ 1,260", category: "Textiles", src: rug, colors: ["jute", "cream"], role: "floor" },
-  { id: "art", name: "Figure I, Framed", maker: "Atelier Dion", price: "€ 1,240", category: "Art", src: art, colors: ["bone", "gold", "ink"], role: "wall" },
-  { id: "art2", name: "Earthforms II", maker: "Atelier Dion", price: "€ 680", category: "Art", src: art2, colors: ["terracotta", "cream", "clay"], role: "wall" },
+  { id: "loungechair", name: "Bouclé Lounge", maker: "Maison Cru", price: "€ 1,420", category: "Seating", src: loungechair, colors: ["cream", "linen"], role: "ground", dims: { w: 75, h: 78 } },
+  { id: "ottoman", name: "Linen Pouf", maker: "Maison Cru", price: "€ 320", category: "Seating", src: ottoman, colors: ["linen", "bone"], role: "surface", dims: { w: 50, h: 42 } },
+  { id: "table", name: "Oval Travertine Table", maker: "Casa Reni", price: "€ 2,150", category: "Tables", src: table, colors: ["travertine", "bone"], role: "surface", dims: { w: 130, h: 35 } },
+  { id: "sidetable", name: "Stone Side Table", maker: "Casa Reni", price: "€ 690", category: "Tables", src: sidetable, colors: ["travertine", "cream"], role: "surface", dims: { w: 45, h: 50 } },
+  { id: "sideboard", name: "Walnut Sideboard", maker: "Northwood", price: "€ 3,240", category: "Storage", src: sideboard, colors: ["walnut", "rust"], role: "ground", dims: { w: 200, h: 75 } },
+  { id: "shelf", name: "Slim Walnut Shelf", maker: "Northwood", price: "€ 1,980", category: "Storage", src: shelf, colors: ["walnut"], role: "ground", dims: { w: 80, h: 200 } },
+  { id: "lamp", name: "Pleated Floor Lamp", maker: "Brass + Linen Co.", price: "€ 920", category: "Lighting", src: lamp, colors: ["linen", "brass"], role: "standing", dims: { w: 40, h: 160 } },
+  { id: "pendant", name: "Walnut Pendant 02", maker: "Northwood", price: "€ 740", category: "Lighting", src: pendant, colors: ["walnut", "brass"], role: "hanging", dims: { w: 45, h: 60 } },
+  { id: "candles", name: "Brass Candle Trio", maker: "Atelier Dion", price: "€ 240", category: "Lighting", src: candles, colors: ["brass", "gold"], role: "prop", dims: { w: 25, h: 30 } },
+  { id: "vase", name: "Onda Vase, Charcoal", maker: "Ceramica Vera", price: "€ 220", category: "Decor", src: vase, colors: ["charcoal", "ink"], role: "prop", dims: { w: 18, h: 32 } },
+  { id: "pampas", name: "Pampas Arrangement", maker: "Ceramica Vera", price: "€ 180", category: "Decor", src: pampas, colors: ["bone", "jute"], role: "standing", dims: { w: 60, h: 140 } },
+  { id: "books", name: "Linen Library, set of 4", maker: "Atelier Dion", price: "€ 140", category: "Decor", src: books, colors: ["cream", "clay"], role: "prop", dims: { w: 28, h: 22 } },
+  { id: "mirror", name: "Halo Brass Mirror", maker: "Atelier Dion", price: "€ 880", category: "Decor", src: mirror, colors: ["brass", "gold"], role: "wall", dims: { w: 80, h: 80 } },
+  { id: "pillows", name: "Linen Cushions, pair", maker: "Maison Cru", price: "€ 180", category: "Textiles", src: pillows, colors: ["linen", "cream"], role: "prop", dims: { w: 50, h: 40 } },
+  { id: "rug", name: "Hand-woven Jute Rug", maker: "Hanssen Workshop", price: "€ 1,260", category: "Textiles", src: rug, colors: ["jute", "cream"], role: "floor", dims: { w: 300, h: 200 } },
+  { id: "art", name: "Figure I, Framed", maker: "Atelier Dion", price: "€ 1,240", category: "Art", src: art, colors: ["bone", "gold", "ink"], role: "wall", dims: { w: 60, h: 90 } },
+  { id: "art2", name: "Earthforms II", maker: "Atelier Dion", price: "€ 680", category: "Art", src: art2, colors: ["terracotta", "cream", "clay"], role: "wall", dims: { w: 70, h: 50 } },
 ];
 
 /** Background scene options for the room composer */
