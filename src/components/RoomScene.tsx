@@ -380,6 +380,48 @@ function Piece({
         <div className="pointer-events-none absolute inset-0 rounded-md ring-2 ring-rust/70" />
       )}
 
+      {/* edit-mode toolbar (top) */}
+      {editMode && selected && (
+        <div
+          className="absolute -top-9 left-1/2 z-20 flex -translate-x-1/2 items-center gap-1 rounded-md bg-background/95 px-1 py-1 shadow ring-1 ring-border backdrop-blur"
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onLayoutChange?.(product.id, { flipX: !flipX });
+            }}
+            title="Flip horizontally"
+            aria-label={`Flip ${product.name} horizontally`}
+            className="flex h-6 w-6 items-center justify-center rounded-sm text-[12px] text-ink hover:bg-muted"
+          >
+            ⇋
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onLayoutChange?.(product.id, { z: (zOrder ?? 0) + 1 });
+            }}
+            title="Bring to front"
+            aria-label={`Bring ${product.name} to front`}
+            className="flex h-6 w-6 items-center justify-center rounded-sm text-[12px] text-ink hover:bg-muted"
+          >
+            ▲
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onLayoutChange?.(product.id, { z: (zOrder ?? 0) - 1 });
+            }}
+            title="Send to back"
+            aria-label={`Send ${product.name} to back`}
+            className="flex h-6 w-6 items-center justify-center rounded-sm text-[12px] text-ink hover:bg-muted"
+          >
+            ▼
+          </button>
+        </div>
+      )}
+
       {/* resize handle (bottom-right) */}
       {editMode && selected && (
         <button
