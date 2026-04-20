@@ -17,7 +17,9 @@ import pampas from "@/assets/pampas.png";
 import ottoman from "@/assets/ottoman.png";
 import shelf from "@/assets/shelf.png";
 import art2 from "@/assets/art2.png";
-import sofaCataline from "@/assets/sofa-cataline.jpg";
+import sofaCataline from "@/assets/sofa-cataline.png";
+import sofaCataline2 from "@/assets/sofa-cataline-2.jpg";
+import sofaCataline3 from "@/assets/sofa-cataline-3.jpg";
 
 export type Category =
   | "Seating"
@@ -57,6 +59,14 @@ export type Product = {
   colors: string[];
   /** decorating role for room composition */
   role: Role;
+  /** optional product detail content for the overlay */
+  description?: string;
+  /** additional gallery images (in-context, lifestyle, alternate angles) */
+  gallery?: string[];
+  /** key/value spec table */
+  details?: Record<string, string>;
+  /** original product page URL */
+  sourceUrl?: string;
 };
 
 /** Color names map to oklch values (used for palette generation) */
@@ -79,7 +89,31 @@ export const colorMap: Record<string, string> = {
 
 export const catalog: Product[] = [
   { id: "sofa", name: "Lina Curved Sofa", maker: "Studio Palerma", price: "€ 4,890", category: "Seating", src: sofa, colors: ["rust", "walnut"], role: "ground" },
-  { id: "sofa-cataline", name: "Cataline 3-piece Modular Sofa", maker: "SKLUM", price: "€ 1,099", category: "Seating", src: sofaCataline, colors: ["cream", "linen", "bone"], role: "ground" },
+  {
+    id: "sofa-cataline",
+    name: "Cataline 3-piece Modular Sofa",
+    maker: "SKLUM",
+    price: "€ 1,099",
+    category: "Seating",
+    src: sofaCataline,
+    colors: ["cream", "linen", "bone"],
+    role: "ground",
+    gallery: [sofaCataline2, sofaCataline3],
+    description:
+      "A 3-piece modular sofa with manually adjustable headrests, upholstered in soft beige chenille (water-repellent polyester) over a pine and poplar plywood frame. Dual-density foam (36 + 30 kg/m³) and synthetic fibres deliver an enveloping yet resilient seat. Built for everyday life — modules anchor together, cushion covers unzip, and plastic feet protect the floor.",
+    details: {
+      Width: "302 cm",
+      Depth: "105 cm",
+      Height: "79 cm",
+      "Seat height": "42 cm",
+      Seats: "4",
+      Frame: "Pine & poplar plywood",
+      Upholstery: "Beige chenille polyester",
+      Collection: "Cataline",
+    },
+    sourceUrl:
+      "https://www.sklum.com/nl/kopen-modulaire-vierzitsbanken/219682-3-delige-modulaire-bank-in-chenille-cataline.html",
+  },
   { id: "armchair", name: "Cane Sling Chair", maker: "Hanssen Workshop", price: "€ 1,680", category: "Seating", src: armchair, colors: ["walnut", "clay"], role: "ground" },
   { id: "loungechair", name: "Bouclé Lounge", maker: "Maison Cru", price: "€ 1,420", category: "Seating", src: loungechair, colors: ["cream", "linen"], role: "ground" },
   { id: "ottoman", name: "Linen Pouf", maker: "Maison Cru", price: "€ 320", category: "Seating", src: ottoman, colors: ["linen", "bone"], role: "surface" },
