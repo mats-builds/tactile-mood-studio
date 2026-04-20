@@ -216,10 +216,23 @@ function PresentPage() {
               ))}
             </tbody>
           </table>
-          <p className="mt-4 text-right text-[9px] italic text-muted-foreground">
-            {items.length} {items.length === 1 ? "item" : "items"} · prepared{" "}
-            {today}
-          </p>
+          <div className="mt-4 flex items-baseline justify-between border-t border-ink/30 pt-3">
+            <p className="text-[9px] italic text-muted-foreground">
+              {items.length} {items.length === 1 ? "item" : "items"} · prepared{" "}
+              {today}
+            </p>
+            <p className="text-[11px] uppercase tracking-[0.2em] text-ink">
+              Total ·{" "}
+              <span className="font-serif text-[16px] not-italic tracking-normal">
+                €{items
+                  .reduce((sum, p) => {
+                    const n = Number(String(p.price).replace(/[^0-9.,]/g, "").replace(",", "."));
+                    return sum + (isFinite(n) ? n : 0);
+                  }, 0)
+                  .toLocaleString("en-GB", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
+              </span>
+            </p>
+          </div>
           <PageFooter />
         </Page>
       </div>
