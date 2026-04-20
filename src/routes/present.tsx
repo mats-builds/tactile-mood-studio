@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo } from "react";
-import { ArrowLeft, Printer } from "lucide-react";
+import { useMemo, useState } from "react";
+import { ArrowLeft, Printer, X } from "lucide-react";
 import {
   catalog,
   colorMap,
@@ -27,6 +27,9 @@ export const Route = createFileRoute("/present")({
 function PresentPage() {
   const { ids, paletteId, sceneId, layout } = useSelection();
   const { products: userProducts } = useUserProducts();
+  const [hidden, setHidden] = useState<Record<string, boolean>>({});
+  const togglePage = (id: string) =>
+    setHidden((h) => ({ ...h, [id]: !h[id] }));
 
   const items = useMemo(() => {
     const merged = [...userProducts, ...catalog];
@@ -92,7 +95,7 @@ function PresentPage() {
 
       <div className="mx-auto flex max-w-[900px] flex-col items-center gap-8 px-6 print:max-w-none print:gap-0 print:px-0">
         {/* === PAGE 1 — Furniture Selection === */}
-        <Page>
+        <Page id="furniture" hidden={hidden.furniture} onToggle={togglePage}>
           <PageHeader left="Page 01" center="Furniture Selection" date={today} />
           <div className="mt-6 grid grid-cols-4 gap-x-4 gap-y-6">
             {items.map((p) => (
@@ -118,7 +121,7 @@ function PresentPage() {
         </Page>
 
         {/* === PAGE 2 — Concept Board === */}
-        <Page>
+        <Page id="concept" hidden={hidden.concept} onToggle={togglePage}>
           <PageHeader left="Page 02" center="Concept Board" date={today} />
           <div className="mt-5 flex flex-col gap-5">
             {/* Composition — full width */}
@@ -126,7 +129,12 @@ function PresentPage() {
               <p className="mb-2 text-[9px] uppercase tracking-[0.2em] text-muted-foreground">
                 Your composition
               </p>
-              <div className="overflow-hidden rounded-md">
+              <div
+                className="overflow-hidden rounded-md"
+                style={{
+                  background: `linear-gradient(180deg, ${colorMap[activePalette.colors[1] ?? "linen"]} 0%, ${colorMap[activePalette.colors[0] ?? "cream"]} 55%, ${colorMap[activePalette.colors[3] ?? "jute"]}55 100%)`,
+                }}
+              >
                 <RoomScene
                   items={items}
                   palette={activePalette}
@@ -159,7 +167,10 @@ function PresentPage() {
             </div>
 
             {/* Palette */}
-            <div>
+            <div
+              className="rounded-md p-3"
+              style={{ backgroundColor: "oklch(0.93 0.012 85)" }}
+            >
               <p className="mb-2 text-[9px] uppercase tracking-[0.2em] text-muted-foreground">
                 Palette · {activePalette.name}
               </p>
@@ -167,7 +178,7 @@ function PresentPage() {
                 {activePalette.colors.map((c, i) => (
                   <div key={i} className="flex flex-col items-center">
                     <div
-                      className="h-10 w-10 rounded-full ring-1 ring-ink/10"
+                      className="h-10 w-10 rounded-full ring-1 ring-ink/20 shadow-sm"
                       style={{ backgroundColor: colorMap[c] }}
                     />
                     <span className="mt-1 text-[7px] uppercase tracking-wider text-muted-foreground">
@@ -182,7 +193,7 @@ function PresentPage() {
         </Page>
 
         {/* === PAGE 3 — Shopping List === */}
-        <Page>
+        <Page id="shopping" hidden={hidden.shopping} onToggle={togglePage}>
           <PageHeader left="Page 03" center="Shopping List" date={today} />
           <table className="mt-6 w-full border-collapse text-[10px]">
             <thead>
@@ -219,20 +230,26 @@ function PresentPage() {
               ))}
             </tbody>
           </table>
-          <div className="mt-4 flex items-baseline justify-between border-t border-ink/30 pt-3">
+          <div className="mt-4 flex flex-wrap items-baseline justify-between gap-3 border-t border-ink/30 pt-3">
             <p className="text-[9px] italic text-muted-foreground">
               {items.length} {items.length === 1 ? "item" : "items"} · prepared{" "}
               {today}
             </p>
-            <p className="text-[11px] uppercase tracking-[0.2em] text-ink">
-              Total ·{" "}
-              <span className="font-serif text-[16px] not-italic tracking-normal">
-                €{items
+            <p className="flex items-baseline gap-2 text-[10px] uppercase tracking-[0.2em] text-ink">
+              <span>Total</span>
+              <span className="text-[18px] font-medium tracking-normal text-ink">
+                €
+                {items
                   .reduce((sum, p) => {
-                    const n = Number(String(p.price).replace(/[^0-9.,]/g, "").replace(",", "."));
+                    const n = Number(
+                      String(p.price).replace(/[^0-9.,]/g, "").replace(",", "."),
+                    );
                     return sum + (isFinite(n) ? n : 0);
                   }, 0)
-                  .toLocaleString("en-GB", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
+                  .toLocaleString("en-GB", {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 2,
+                  })}
               </span>
             </p>
           </div>
@@ -251,12 +268,44 @@ function PresentPage() {
   );
 }
 
-function Page({ children }: { children: React.ReactNode }) {
+function Page({
+  children,
+  id,
+  hidden,
+  onToggle,
+}: {
+  children: React.ReactNode;
+  id: string;
+  hidden?: boolean;
+  onToggle: (id: string) => void;
+}) {
+  if (hidden) {
+    return (
+      <div className="flex w-full items-center justify-between rounded-md border border-dashed border-ink/30 bg-background/50 px-4 py-3 print:hidden">
+        <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+          Page hidden — won&apos;t be printed
+        </span>
+        <button
+          onClick={() => onToggle(id)}
+          className="text-[10px] uppercase tracking-[0.2em] text-ink underline-offset-2 hover:underline"
+        >
+          Restore
+        </button>
+      </div>
+    );
+  }
   return (
     <section
-      className="relative flex w-full flex-col bg-[oklch(0.95_0.012_85)] p-6 shadow-[var(--shadow-soft)] print:break-after-page print:shadow-none"
+      className="group/page relative flex w-full flex-col bg-[oklch(0.95_0.012_85)] p-6 shadow-[var(--shadow-soft)] print:break-after-page print:shadow-none"
       style={{ aspectRatio: "1 / 1.414" }}
     >
+      <button
+        onClick={() => onToggle(id)}
+        aria-label="Remove this page from the export"
+        className="absolute right-3 top-3 z-20 flex h-7 w-7 items-center justify-center rounded-full bg-background text-ink opacity-0 shadow-sm ring-1 ring-ink/15 transition-opacity hover:bg-rust hover:text-primary-foreground group-hover/page:opacity-100 print:hidden"
+      >
+        <X size={14} />
+      </button>
       {children}
     </section>
   );
