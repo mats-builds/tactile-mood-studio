@@ -8,6 +8,27 @@ type Props = {
   onRemove?: (id: string) => void;
 };
 
+/** Reference room used to scale pieces. ~5m wide, ~2.8m tall back wall.
+ *  These map cm → percentage of the moodboard frame. */
+const ROOM_W_CM = 500;
+const ROOM_H_CM = 280;
+/** How much of the moodboard frame the back wall occupies (rest is floor in perspective). */
+const WALL_FRAC = 0.7;
+
+/** Convert real-world cm to a width/height % of the moodboard container.
+ *  Width maps to ROOM_W_CM. Height maps to ROOM_H_CM but only across the wall band. */
+function sizeFromDims(
+  dims: { w: number; h: number } | undefined,
+  fallback: { w: number; h: number },
+): { width: string; height: string } {
+  const w = dims?.w ?? fallback.w;
+  const h = dims?.h ?? fallback.h;
+  return {
+    width: `${(w / ROOM_W_CM) * 100}%`,
+    height: `${(h / ROOM_H_CM) * 100 * WALL_FRAC}%`,
+  };
+}
+
 /**
  * Composes selected pieces into a believable room scene.
  * Decorating rules:
@@ -101,6 +122,7 @@ export function RoomScene({ items, palette, scene, onRemove }: Props) {
       {groups.wall.map((p, i, arr) => {
         const total = arr.length;
         const left = total === 1 ? 50 : 30 + (i * 40) / Math.max(total - 1, 1);
+        const sz = sizeFromDims(p.dims, { w: 70, h: 90 });
         return (
           <Piece
             key={p.id}
@@ -109,8 +131,8 @@ export function RoomScene({ items, palette, scene, onRemove }: Props) {
             style={{
               left: `${left}%`,
               top: "12%",
-              width: "12%",
-              height: "26%",
+              width: sz.width,
+              height: sz.height,
               transform: "translateX(-50%)",
               zIndex: 10,
             }}
@@ -122,6 +144,7 @@ export function RoomScene({ items, palette, scene, onRemove }: Props) {
       {groups.hanging.map((p, i, arr) => {
         const total = arr.length;
         const left = total === 1 ? 50 : 35 + (i * 30) / Math.max(total - 1, 1);
+        const sz = sizeFromDims(p.dims, { w: 45, h: 60 });
         return (
           <Piece
             key={p.id}
@@ -130,8 +153,8 @@ export function RoomScene({ items, palette, scene, onRemove }: Props) {
             style={{
               left: `${left}%`,
               top: "0%",
-              width: "10%",
-              height: "20%",
+              width: sz.width,
+              height: sz.height,
               transform: "translateX(-50%)",
               zIndex: 11,
             }}
@@ -140,15 +163,21 @@ export function RoomScene({ items, palette, scene, onRemove }: Props) {
       })}
 
       {/* FLOOR: rug — flat on the floor, squashed via Y-scale to simulate perspective */}
-      {groups.floor.map((p) => (
+      {groups.floor.map((p) => {
+        const w = p.dims?.w ?? 300;
+        const d = p.dims?.d ?? p.dims?.h ?? 200; // depth (in cm) — shown as flattened height
+        const widthPct = (w / ROOM_W_CM) * 100;
+        // depth becomes vertical band height after the perspective squash
+        const heightPct = (d / ROOM_W_CM) * 100 * 0.6;
+        return (
         <div
           key={p.id}
           className="group/piece absolute"
           style={{
             left: "50%",
             bottom: "2%",
-            width: "55%",
-            height: "22%",
+            width: `${widthPct}%`,
+            height: `${heightPct}%`,
             transform: "translateX(-50%)",
             zIndex: 20,
           }}
@@ -170,14 +199,15 @@ export function RoomScene({ items, palette, scene, onRemove }: Props) {
             </button>
           )}
         </div>
-      ))}
+        );
+      })}
 
       {/* GROUND: sofa, sideboards, big seating — sit ON the rug */}
       {groups.ground.map((p, i, arr) => {
         const total = arr.length;
         const left =
           total === 1 ? 50 : 28 + (i * 44) / Math.max(total - 1, 1);
-        const isPrimary = total === 1 || i === Math.floor(total / 2);
+        const sz = sizeFromDims(p.dims, { w: 200, h: 80 });
         return (
           <Piece
             key={p.id}
@@ -186,8 +216,8 @@ export function RoomScene({ items, palette, scene, onRemove }: Props) {
             style={{
               left: `${left}%`,
               bottom: "8%",
-              width: isPrimary ? "30%" : "22%",
-              height: isPrimary ? "32%" : "26%",
+              width: sz.width,
+              height: sz.height,
               transform: "translateX(-50%)",
               zIndex: 30 + i,
             }}
@@ -199,6 +229,7 @@ export function RoomScene({ items, palette, scene, onRemove }: Props) {
       {groups.standing.map((p, i) => {
         const side = i % 2 === 0 ? "left" : "right";
         const offset = 6 + Math.floor(i / 2) * 8;
+        const sz = sizeFromDims(p.dims, { w: 40, h: 160 });
         return (
           <Piece
             key={p.id}
@@ -207,8 +238,8 @@ export function RoomScene({ items, palette, scene, onRemove }: Props) {
             style={{
               [side]: `${offset}%`,
               bottom: "8%",
-              width: "10%",
-              height: "44%",
+              width: sz.width,
+              height: sz.height,
               zIndex: 25,
             }}
           />
@@ -219,6 +250,7 @@ export function RoomScene({ items, palette, scene, onRemove }: Props) {
       {groups.surface.map((p, i) => {
         const side = i % 2 === 0 ? "left" : "right";
         const offset = 20 + Math.floor(i / 2) * 6;
+        const sz = sizeFromDims(p.dims, { w: 60, h: 50 });
         return (
           <Piece
             key={p.id}
@@ -227,8 +259,8 @@ export function RoomScene({ items, palette, scene, onRemove }: Props) {
             style={{
               [side]: `${offset}%`,
               bottom: "8%",
-              width: "12%",
-              height: "20%",
+              width: sz.width,
+              height: sz.height,
               zIndex: 35,
             }}
           />
@@ -240,6 +272,7 @@ export function RoomScene({ items, palette, scene, onRemove }: Props) {
         const total = arr.length;
         const left = 18 + (i * 64) / Math.max(total, 1);
         const bottoms = ["20%", "16%", "24%", "18%", "22%"];
+        const sz = sizeFromDims(p.dims, { w: 25, h: 30 });
         return (
           <Piece
             key={p.id}
@@ -248,8 +281,8 @@ export function RoomScene({ items, palette, scene, onRemove }: Props) {
             style={{
               left: `${left}%`,
               bottom: bottoms[i % bottoms.length],
-              width: "7%",
-              height: "12%",
+              width: sz.width,
+              height: sz.height,
               zIndex: 40 + i,
             }}
           />
