@@ -144,32 +144,57 @@ async function removeBackground(imageUrl: string) {
   const apiKey = process.env.LOVABLE_API_KEY;
   if (!apiKey) return undefined;
 
-  try {
-    // Gemini image-edit is much more reliable when the source is sent inline
-    // as a base64 data URL than as a remote URL (many CDNs block its fetcher).
-    let inlineUrl = imageUrl;
-    if (/^https?:\/\//i.test(imageUrl)) {
-      try {
-        const imgRes = await fetch(imageUrl, {
-          headers: { "user-agent": "Mozilla/5.0 (compatible; MOODS/1.0)" },
-        });
-        if (imgRes.ok) {
-          const buf = new Uint8Array(await imgRes.arrayBuffer());
-          // base64 encode
-          let binary = "";
-          for (let i = 0; i < buf.length; i++) binary += String.fromCharCode(buf[i]);
-          const b64 = btoa(binary);
-          const mime =
-            imgRes.headers.get("content-type")?.split(";")[0]?.trim() ||
-            "image/jpeg";
-          inlineUrl = `data:${mime};base64,${b64}`;
+  // Build a list of source URLs to try in order. Gemini's image model is
+  // picky: webp often returns empty, and some CDNs block its fetcher. We
+  // try inline base64 first (rewriting webp → jpeg via mime swap if the
+  // CDN supports it), then fall back to the raw URL.
+  const candidates: string[] = [];
+  if (/^data:/i.test(imageUrl)) {
+    candidates.push(imageUrl);
+  } else if (/^https?:\/\//i.test(imageUrl)) {
+    try {
+      const imgRes = await fetch(imageUrl, {
+        headers: {
+          "user-agent":
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36",
+          accept: "image/avif,image/webp,image/png,image/jpeg,*/*",
+        },
+      });
+      if (imgRes.ok) {
+        const buf = new Uint8Array(await imgRes.arrayBuffer());
+        let binary = "";
+        const chunk = 0x8000;
+        for (let i = 0; i < buf.length; i += chunk) {
+          binary += String.fromCharCode(...buf.subarray(i, i + chunk));
         }
-      } catch {
-        /* fall back to original URL */
+        const b64 = btoa(binary);
+        const ct =
+          imgRes.headers.get("content-type")?.split(";")[0]?.trim().toLowerCase() ||
+          "";
+        // Sniff real type from magic bytes — CDNs sometimes lie.
+        let mime = ct || "image/jpeg";
+        if (buf[0] === 0xff && buf[1] === 0xd8) mime = "image/jpeg";
+        else if (buf[0] === 0x89 && buf[1] === 0x50) mime = "image/png";
+        else if (buf[0] === 0x52 && buf[1] === 0x49) mime = "image/webp";
+        // Gemini handles png/jpeg most reliably. For webp, still try inline
+        // (sometimes works) but ALSO queue png/jpeg-labelled fallbacks.
+        candidates.push(`data:${mime};base64,${b64}`);
+        if (mime === "image/webp") {
+          candidates.push(`data:image/png;base64,${b64}`);
+          candidates.push(`data:image/jpeg;base64,${b64}`);
+        }
       }
+    } catch {
+      /* ignore — will fall back to remote url */
     }
+    candidates.push(imageUrl);
+  } else {
+    return undefined;
+  }
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+  for (const inlineUrl of candidates) {
+    try {
+      const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,
@@ -197,25 +222,33 @@ async function removeBackground(imageUrl: string) {
       }),
     });
 
-    if (!response.ok) {
-      console.error("removeBackground failed", response.status, await response.text().catch(() => ""));
-      return undefined;
+      if (!response.ok) {
+        console.error(
+          "removeBackground http error",
+          response.status,
+          await response.text().catch(() => ""),
+        );
+        continue;
+      }
+
+      const data = (await response.json()) as {
+        choices?: Array<{
+          message?: {
+            images?: Array<{ image_url?: { url?: string } }>;
+          };
+        }>;
+      };
+
+      const cleaned = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+      if (typeof cleaned === "string" && cleaned.length > 0) {
+        return cleaned;
+      }
+      console.warn("removeBackground returned no image, trying next candidate");
+    } catch (err) {
+      console.error("removeBackground error", err);
     }
-
-    const data = (await response.json()) as {
-      choices?: Array<{
-        message?: {
-          images?: Array<{ image_url?: { url?: string } }>;
-        };
-      }>;
-    };
-
-    const cleaned = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-    return typeof cleaned === "string" ? cleaned : undefined;
-  } catch (err) {
-    console.error("removeBackground error", err);
-    return undefined;
   }
+  return undefined;
 }
 
 export const scrapeProduct = createServerFn({ method: "POST" })
