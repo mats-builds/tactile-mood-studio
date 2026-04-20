@@ -78,6 +78,12 @@ export const selectionStore = {
     persist();
     emit();
   },
+  setAll(ids: string[]) {
+    hydrate();
+    selected = new Set(ids);
+    persist();
+    emit();
+  },
   getPaletteId: () => paletteId,
   setPaletteId(id: string | null) {
     hydrate();
@@ -138,6 +144,7 @@ export function useSelection() {
     has: (id: string) => selectionStore.has(id),
     toggle: (id: string) => selectionStore.toggle(id),
     clear: () => selectionStore.clear(),
+    setAll: (ids: string[]) => selectionStore.setAll(ids),
     paletteId: selectionStore.getPaletteId(),
     setPaletteId: (id: string | null) => selectionStore.setPaletteId(id),
     sceneId: selectionStore.getSceneId(),
