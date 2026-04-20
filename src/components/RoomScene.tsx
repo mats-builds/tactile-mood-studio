@@ -186,8 +186,8 @@ export function RoomScene({ items, palette, scene, onRemove }: Props) {
             style={{
               left: `${left}%`,
               bottom: "8%",
-              width: isPrimary ? "32%" : "22%",
-              maxHeight: "42%",
+              width: isPrimary ? "30%" : "22%",
+              height: isPrimary ? "32%" : "26%",
               transform: "translateX(-50%)",
               zIndex: 30 + i,
             }}
@@ -197,7 +197,6 @@ export function RoomScene({ items, palette, scene, onRemove }: Props) {
 
       {/* STANDING: floor lamps, pampas — taller, sides */}
       {groups.standing.map((p, i) => {
-        // alternate sides
         const side = i % 2 === 0 ? "left" : "right";
         const offset = 6 + Math.floor(i / 2) * 8;
         return (
@@ -207,8 +206,9 @@ export function RoomScene({ items, palette, scene, onRemove }: Props) {
             onRemove={onRemove}
             style={{
               [side]: `${offset}%`,
-              bottom: "10%",
-              width: "13%",
+              bottom: "8%",
+              width: "10%",
+              height: "44%",
               zIndex: 25,
             }}
           />
@@ -218,7 +218,7 @@ export function RoomScene({ items, palette, scene, onRemove }: Props) {
       {/* SURFACE: side tables, ottomans, low tables — flanking sofa */}
       {groups.surface.map((p, i) => {
         const side = i % 2 === 0 ? "left" : "right";
-        const offset = 22 + Math.floor(i / 2) * 6;
+        const offset = 20 + Math.floor(i / 2) * 6;
         return (
           <Piece
             key={p.id}
@@ -226,8 +226,9 @@ export function RoomScene({ items, palette, scene, onRemove }: Props) {
             onRemove={onRemove}
             style={{
               [side]: `${offset}%`,
-              bottom: "10%",
-              width: "15%",
+              bottom: "8%",
+              width: "12%",
+              height: "20%",
               zIndex: 35,
             }}
           />
@@ -237,9 +238,8 @@ export function RoomScene({ items, palette, scene, onRemove }: Props) {
       {/* PROPS: vases, books, candles, pillows — small, scattered on surfaces */}
       {groups.prop.map((p, i, arr) => {
         const total = arr.length;
-        // arrange across the middle band
         const left = 18 + (i * 64) / Math.max(total, 1);
-        const bottoms = ["22%", "18%", "26%", "20%", "24%"];
+        const bottoms = ["20%", "16%", "24%", "18%", "22%"];
         return (
           <Piece
             key={p.id}
@@ -248,7 +248,8 @@ export function RoomScene({ items, palette, scene, onRemove }: Props) {
             style={{
               left: `${left}%`,
               bottom: bottoms[i % bottoms.length],
-              width: "8%",
+              width: "7%",
+              height: "12%",
               zIndex: 40 + i,
             }}
           />
