@@ -349,7 +349,8 @@ function Piece({
         width: "auto",
         height: `${liveHeight}%`,
         transform: "translate(-50%, -100%)",
-        zIndex: dragging || resizing ? 100 : selected ? 40 : undefined,
+        zIndex:
+          dragging || resizing ? 1000 : selected ? 500 + zOrder : 10 + zOrder,
         touchAction: editMode ? "none" : undefined,
       }}
       onPointerDown={editMode ? startDrag : undefined}
@@ -364,8 +365,13 @@ function Piece({
         } ${isFloor ? "" : ""}`}
         style={
           isFloor
-            ? { transform: "perspective(800px) rotateX(58deg)", objectFit: "cover" }
-            : undefined
+            ? {
+                transform: `perspective(800px) rotateX(58deg)${flipX ? " scaleX(-1)" : ""}`,
+                objectFit: "cover",
+              }
+            : flipX
+              ? { transform: "scaleX(-1)" }
+              : undefined
         }
       />
 
