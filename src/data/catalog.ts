@@ -1,0 +1,130 @@
+import sofa from "@/assets/sofa.png";
+import armchair from "@/assets/armchair.png";
+import table from "@/assets/table.png";
+import lamp from "@/assets/lamp.png";
+import pendant from "@/assets/pendant.png";
+import vase from "@/assets/vase.png";
+import art from "@/assets/art.png";
+import pillows from "@/assets/pillows.png";
+import rug from "@/assets/rug.png";
+import sideboard from "@/assets/sideboard.png";
+import mirror from "@/assets/mirror.png";
+import sidetable from "@/assets/sidetable.png";
+import loungechair from "@/assets/loungechair.png";
+import books from "@/assets/books.png";
+import candles from "@/assets/candles.png";
+import pampas from "@/assets/pampas.png";
+import ottoman from "@/assets/ottoman.png";
+import shelf from "@/assets/shelf.png";
+import art2 from "@/assets/art2.png";
+
+export type Category =
+  | "Seating"
+  | "Tables"
+  | "Lighting"
+  | "Storage"
+  | "Decor"
+  | "Textiles"
+  | "Art";
+
+export type Product = {
+  id: string;
+  name: string;
+  maker: string;
+  price: string;
+  category: Category;
+  src: string;
+  /** dominant color tags used by the AI palette algorithm */
+  colors: string[];
+};
+
+/** Color names map to oklch values (used for palette generation) */
+export const colorMap: Record<string, string> = {
+  rust: "oklch(0.55 0.14 40)",
+  walnut: "oklch(0.34 0.05 50)",
+  travertine: "oklch(0.86 0.025 75)",
+  linen: "oklch(0.94 0.018 80)",
+  cream: "oklch(0.96 0.015 85)",
+  brass: "oklch(0.74 0.09 80)",
+  charcoal: "oklch(0.28 0.01 60)",
+  ink: "oklch(0.22 0.02 50)",
+  jute: "oklch(0.7 0.07 70)",
+  terracotta: "oklch(0.62 0.13 40)",
+  sage: "oklch(0.72 0.04 145)",
+  bone: "oklch(0.92 0.012 85)",
+  gold: "oklch(0.78 0.11 85)",
+  clay: "oklch(0.65 0.1 50)",
+};
+
+export const catalog: Product[] = [
+  { id: "sofa", name: "Lina Curved Sofa", maker: "Studio Palerma", price: "€ 4,890", category: "Seating", src: sofa, colors: ["rust", "walnut"] },
+  { id: "armchair", name: "Cane Sling Chair", maker: "Hanssen Workshop", price: "€ 1,680", category: "Seating", src: armchair, colors: ["walnut", "clay"] },
+  { id: "loungechair", name: "Bouclé Lounge", maker: "Maison Cru", price: "€ 1,420", category: "Seating", src: loungechair, colors: ["cream", "linen"] },
+  { id: "ottoman", name: "Linen Pouf", maker: "Maison Cru", price: "€ 320", category: "Seating", src: ottoman, colors: ["linen", "bone"] },
+  { id: "table", name: "Oval Travertine Table", maker: "Casa Reni", price: "€ 2,150", category: "Tables", src: table, colors: ["travertine", "bone"] },
+  { id: "sidetable", name: "Stone Side Table", maker: "Casa Reni", price: "€ 690", category: "Tables", src: sidetable, colors: ["travertine", "cream"] },
+  { id: "sideboard", name: "Walnut Sideboard", maker: "Northwood", price: "€ 3,240", category: "Storage", src: sideboard, colors: ["walnut", "rust"] },
+  { id: "shelf", name: "Slim Walnut Shelf", maker: "Northwood", price: "€ 1,980", category: "Storage", src: shelf, colors: ["walnut"] },
+  { id: "lamp", name: "Pleated Floor Lamp", maker: "Brass + Linen Co.", price: "€ 920", category: "Lighting", src: lamp, colors: ["linen", "brass"] },
+  { id: "pendant", name: "Walnut Pendant 02", maker: "Northwood", price: "€ 740", category: "Lighting", src: pendant, colors: ["walnut", "brass"] },
+  { id: "candles", name: "Brass Candle Trio", maker: "Atelier Dion", price: "€ 240", category: "Lighting", src: candles, colors: ["brass", "gold"] },
+  { id: "vase", name: "Onda Vase, Charcoal", maker: "Ceramica Vera", price: "€ 220", category: "Decor", src: vase, colors: ["charcoal", "ink"] },
+  { id: "pampas", name: "Pampas Arrangement", maker: "Ceramica Vera", price: "€ 180", category: "Decor", src: pampas, colors: ["bone", "jute"] },
+  { id: "books", name: "Linen Library, set of 4", maker: "Atelier Dion", price: "€ 140", category: "Decor", src: books, colors: ["cream", "clay"] },
+  { id: "mirror", name: "Halo Brass Mirror", maker: "Atelier Dion", price: "€ 880", category: "Decor", src: mirror, colors: ["brass", "gold"] },
+  { id: "pillows", name: "Linen Cushions, pair", maker: "Maison Cru", price: "€ 180", category: "Textiles", src: pillows, colors: ["linen", "cream"] },
+  { id: "rug", name: "Hand-woven Jute Rug", maker: "Hanssen Workshop", price: "€ 1,260", category: "Textiles", src: rug, colors: ["jute", "cream"] },
+  { id: "art", name: "Figure I, Framed", maker: "Atelier Dion", price: "€ 1,240", category: "Art", src: art, colors: ["bone", "gold", "ink"] },
+  { id: "art2", name: "Earthforms II", maker: "Atelier Dion", price: "€ 680", category: "Art", src: art2, colors: ["terracotta", "cream", "clay"] },
+];
+
+export const categories: Category[] = [
+  "Seating",
+  "Tables",
+  "Lighting",
+  "Storage",
+  "Decor",
+  "Textiles",
+  "Art",
+];
+
+export type Palette = {
+  id: string;
+  name: string;
+  colors: string[]; // color keys from colorMap
+};
+
+export const curatedPalettes: Palette[] = [
+  { id: "rust-walnut", name: "Rust & Walnut", colors: ["rust", "walnut", "travertine", "linen", "brass"] },
+  { id: "coastal", name: "Coastal Calm", colors: ["bone", "linen", "sage", "travertine", "jute"] },
+  { id: "mono-warm", name: "Warm Mono", colors: ["cream", "linen", "bone", "jute", "ink"] },
+  { id: "terracotta", name: "Terracotta Sun", colors: ["terracotta", "clay", "cream", "brass", "walnut"] },
+  { id: "noir", name: "Noir Editorial", colors: ["ink", "charcoal", "linen", "brass", "bone"] },
+];
+
+/** Smart local algorithm: derive a palette from selected products */
+export function generateAIPalette(productIds: string[]): Palette {
+  if (productIds.length === 0) {
+    return curatedPalettes[0];
+  }
+  const tally = new Map<string, number>();
+  for (const id of productIds) {
+    const p = catalog.find((c) => c.id === id);
+    if (!p) continue;
+    p.colors.forEach((c, i) => {
+      // first color in a product weighs most
+      tally.set(c, (tally.get(c) ?? 0) + (3 - i));
+    });
+  }
+  let ranked = Array.from(tally.entries())
+    .sort((a, b) => b[1] - a[1])
+    .map(([k]) => k);
+
+  // ensure neutrals & accents present for harmony
+  const neutrals = ["linen", "cream", "bone", "travertine"];
+  const accents = ["brass", "gold", "rust", "terracotta"];
+  if (!ranked.some((c) => neutrals.includes(c))) ranked.push("linen");
+  if (!ranked.some((c) => accents.includes(c))) ranked.push("brass");
+
+  return { id: "ai", name: "AI Curated", colors: ranked.slice(0, 5) };
+}

@@ -1,0 +1,75 @@
+import { useEffect, useState } from "react";
+
+const KEY = "moods.selection.v1";
+const PALETTE_KEY = "moods.palette.v1";
+
+type Listener = () => void;
+const listeners = new Set<Listener>();
+
+let selected: Set<string> = new Set();
+let paletteId: string | null = null;
+
+function load() {
+  if (typeof window === "undefined") return;
+  try {
+    const raw = window.localStorage.getItem(KEY);
+    if (raw) selected = new Set(JSON.parse(raw));
+    const p = window.localStorage.getItem(PALETTE_KEY);
+    if (p) paletteId = p;
+  } catch {
+    /* ignore */
+  }
+}
+load();
+
+function persist() {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(KEY, JSON.stringify(Array.from(selected)));
+  if (paletteId) window.localStorage.setItem(PALETTE_KEY, paletteId);
+  else window.localStorage.removeItem(PALETTE_KEY);
+}
+
+function emit() {
+  listeners.forEach((l) => l());
+}
+
+export const selectionStore = {
+  has: (id: string) => selected.has(id),
+  list: () => Array.from(selected),
+  count: () => selected.size,
+  toggle(id: string) {
+    if (selected.has(id)) selected.delete(id);
+    else selected.add(id);
+    persist();
+    emit();
+  },
+  clear() {
+    selected.clear();
+    persist();
+    emit();
+  },
+  getPaletteId: () => paletteId,
+  setPaletteId(id: string | null) {
+    paletteId = id;
+    persist();
+    emit();
+  },
+  subscribe(l: Listener) {
+    listeners.add(l);
+    return () => listeners.delete(l);
+  },
+};
+
+export function useSelection() {
+  const [, force] = useState(0);
+  useEffect(() => selectionStore.subscribe(() => force((n) => n + 1)), []);
+  return {
+    ids: selectionStore.list(),
+    count: selectionStore.count(),
+    has: (id: string) => selectionStore.has(id),
+    toggle: (id: string) => selectionStore.toggle(id),
+    clear: () => selectionStore.clear(),
+    paletteId: selectionStore.getPaletteId(),
+    setPaletteId: (id: string | null) => selectionStore.setPaletteId(id),
+  };
+}
