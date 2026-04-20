@@ -174,7 +174,6 @@ export function RoomScene({ items, palette, scene, onRemove }: Props) {
       {/* GROUND: sofa, sideboards, big seating — sit ON the rug */}
       {groups.ground.map((p, i, arr) => {
         const total = arr.length;
-        // primary piece centered, others fan out
         const left =
           total === 1 ? 50 : 28 + (i * 44) / Math.max(total - 1, 1);
         const isPrimary = total === 1 || i === Math.floor(total / 2);
@@ -185,8 +184,9 @@ export function RoomScene({ items, palette, scene, onRemove }: Props) {
             onRemove={onRemove}
             style={{
               left: `${left}%`,
-              bottom: "12%",
-              width: isPrimary ? "38%" : "26%",
+              bottom: "8%",
+              width: isPrimary ? "32%" : "22%",
+              maxHeight: "42%",
               transform: "translateX(-50%)",
               zIndex: 30 + i,
             }}
