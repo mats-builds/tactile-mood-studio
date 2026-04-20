@@ -62,7 +62,12 @@ export const selectionStore = {
 
 export function useSelection() {
   const [, force] = useState(0);
-  useEffect(() => selectionStore.subscribe(() => force((n) => n + 1)), []);
+  useEffect(() => {
+    const unsub = selectionStore.subscribe(() => force((n) => n + 1));
+    return () => {
+      unsub;
+    };
+  }, []);
   return {
     ids: selectionStore.list(),
     count: selectionStore.count(),
