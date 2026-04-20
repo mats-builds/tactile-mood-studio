@@ -125,15 +125,31 @@ function MoodboardPage() {
 
       {/* Title */}
       <section className="mx-auto max-w-[1500px] px-6 pb-6 pt-10 md:px-10 md:pt-14">
-        <p className="text-xs uppercase tracking-display text-muted-foreground">
-          Your concept
-        </p>
-        <h1 className="mt-3 font-serif text-5xl leading-[0.95] text-ink md:text-7xl">
-          A room,
-          <br />
-          <em className="font-light italic text-rust">composed.</em>
-        </h1>
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <p className="text-xs uppercase tracking-display text-muted-foreground">
+              Your concept
+            </p>
+            <h1 className="mt-3 font-serif text-5xl leading-[0.95] text-ink md:text-7xl">
+              A room,
+              <br />
+              <em className="font-light italic text-rust">composed.</em>
+            </h1>
+          </div>
+          <button
+            onClick={() => setMatchOpen(true)}
+            className="inline-flex items-center gap-2 rounded-full border border-ink bg-ink px-5 py-2.5 text-xs uppercase tracking-[0.18em] text-background transition-transform hover:scale-[1.02]"
+          >
+            <ImagePlus size={14} /> Match from an image
+          </button>
+        </div>
       </section>
+
+      <MatchFromImageDialog
+        open={matchOpen}
+        onOpenChange={setMatchOpen}
+        onMatched={() => setEditMode(true)}
+      />
 
       {/* Composed Room Scene */}
       <section className="mx-auto max-w-[1500px] px-6 md:px-10">
