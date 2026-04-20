@@ -296,6 +296,15 @@ function PresentPage() {
           }
         }
       `}</style>
+
+      <LeadCaptureDialog
+        open={leadOpen}
+        onOpenChange={setLeadOpen}
+        onSubmit={(lead) => {
+          setLeadOpen(false);
+          setSentTo(lead);
+        }}
+      />
     </main>
   );
 }
