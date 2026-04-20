@@ -12,11 +12,15 @@ type Props = {
  *  These map cm → percentage of the moodboard frame. */
 const ROOM_W_CM = 500;
 const ROOM_H_CM = 280;
-/** How much of the moodboard frame the back wall occupies (rest is floor in perspective). */
-const WALL_FRAC = 0.7;
 
 /** Convert real-world cm to a width/height % of the moodboard container.
- *  Width maps to ROOM_W_CM. Height maps to ROOM_H_CM but only across the wall band. */
+ *  The moodboard is aspect-[16/10]: container width = ROOM_W_CM, container
+ *  height = ROOM_W_CM * 10/16 ≈ 312cm of vertical space. We map both axes
+ *  with the SAME cm-per-pixel ratio so a 300cm sofa and a 160cm lamp keep
+ *  their real proportions relative to each other. */
+const FRAME_AR = 16 / 10; // width / height
+const ROOM_FRAME_H_CM = ROOM_W_CM / FRAME_AR; // ≈ 312cm
+
 function sizeFromDims(
   dims: { w: number; h: number } | undefined,
   fallback: { w: number; h: number },
@@ -25,7 +29,7 @@ function sizeFromDims(
   const h = dims?.h ?? fallback.h;
   return {
     width: `${(w / ROOM_W_CM) * 100}%`,
-    height: `${(h / ROOM_H_CM) * 100 * WALL_FRAC}%`,
+    height: `${(h / ROOM_FRAME_H_CM) * 100}%`,
   };
 }
 
