@@ -47,6 +47,31 @@ export const userProductsStore = {
     persist();
     emit();
   },
+  update(id: string, patch: Partial<Product>) {
+    hydrate();
+    products = products.map((p) => (p.id === id ? { ...p, ...patch } : p));
+    persist();
+    emit();
+  },
+  removeImage(id: string, imageUrl: string) {
+    hydrate();
+    products = products.map((p) => {
+      if (p.id !== id) return p;
+      const gallery = (p.gallery ?? []).filter((g) => g !== imageUrl);
+      // If removing the main showcase, promote the first gallery image.
+      if (p.src === imageUrl) {
+        const next = gallery[0];
+        return {
+          ...p,
+          src: next ?? "",
+          gallery: next ? gallery.slice(1) : [],
+        };
+      }
+      return { ...p, gallery };
+    });
+    persist();
+    emit();
+  },
   subscribe(l: Listener) {
     listeners.add(l);
     return () => {
@@ -69,5 +94,8 @@ export function useUserProducts() {
     products: userProductsStore.list(),
     add: (p: Product) => userProductsStore.add(p),
     remove: (id: string) => userProductsStore.remove(id),
+    update: (id: string, patch: Partial<Product>) => userProductsStore.update(id, patch),
+    removeImage: (id: string, imageUrl: string) =>
+      userProductsStore.removeImage(id, imageUrl),
   };
 }

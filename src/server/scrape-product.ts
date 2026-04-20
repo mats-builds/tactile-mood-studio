@@ -145,6 +145,30 @@ async function removeBackground(imageUrl: string) {
   if (!apiKey) return undefined;
 
   try {
+    // Gemini image-edit is much more reliable when the source is sent inline
+    // as a base64 data URL than as a remote URL (many CDNs block its fetcher).
+    let inlineUrl = imageUrl;
+    if (/^https?:\/\//i.test(imageUrl)) {
+      try {
+        const imgRes = await fetch(imageUrl, {
+          headers: { "user-agent": "Mozilla/5.0 (compatible; MOODS/1.0)" },
+        });
+        if (imgRes.ok) {
+          const buf = new Uint8Array(await imgRes.arrayBuffer());
+          // base64 encode
+          let binary = "";
+          for (let i = 0; i < buf.length; i++) binary += String.fromCharCode(buf[i]);
+          const b64 = btoa(binary);
+          const mime =
+            imgRes.headers.get("content-type")?.split(";")[0]?.trim() ||
+            "image/jpeg";
+          inlineUrl = `data:${mime};base64,${b64}`;
+        }
+      } catch {
+        /* fall back to original URL */
+      }
+    }
+
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -160,11 +184,11 @@ async function removeBackground(imageUrl: string) {
               {
                 type: "text",
                 text:
-                  "Remove the entire background and keep only the furniture product centered on a transparent background. Preserve the exact product shape, proportions, material, color, and perspective. Do not stylize or redesign it. Output a clean catalog packshot PNG.",
+                  "Isolate the main furniture product in this image and place it on a fully transparent background. Erase EVERYTHING else: the floor, walls, room, props, shadows, gradients and any backdrop colour. Keep the product pixel-accurate — same shape, proportions, materials, colours, perspective and lighting. Do not redraw, restyle or add elements. Return a clean catalog packshot PNG with an alpha channel.",
               },
               {
                 type: "image_url",
-                image_url: { url: imageUrl },
+                image_url: { url: inlineUrl },
               },
             ],
           },
@@ -173,7 +197,10 @@ async function removeBackground(imageUrl: string) {
       }),
     });
 
-    if (!response.ok) return undefined;
+    if (!response.ok) {
+      console.error("removeBackground failed", response.status, await response.text().catch(() => ""));
+      return undefined;
+    }
 
     const data = (await response.json()) as {
       choices?: Array<{
@@ -185,7 +212,8 @@ async function removeBackground(imageUrl: string) {
 
     const cleaned = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
     return typeof cleaned === "string" ? cleaned : undefined;
-  } catch {
+  } catch (err) {
+    console.error("removeBackground error", err);
     return undefined;
   }
 }
