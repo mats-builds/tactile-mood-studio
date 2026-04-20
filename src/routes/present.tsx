@@ -31,6 +31,17 @@ function PresentPage() {
   const [hidden, setHidden] = useState<Record<string, boolean>>({});
   const togglePage = (id: string) =>
     setHidden((h) => ({ ...h, [id]: !h[id] }));
+  const [leadOpen, setLeadOpen] = useState(false);
+  const [sentTo, setSentTo] = useState<Lead | null>(() => getStoredLead());
+
+  const handleSend = () => {
+    const existing = getStoredLead();
+    if (existing) {
+      setSentTo(existing);
+      return;
+    }
+    setLeadOpen(true);
+  };
 
   const items = useMemo(() => {
     const merged = [...userProducts, ...catalog];
@@ -88,9 +99,23 @@ function PresentPage() {
         </p>
         <button
           onClick={() => window.print()}
-          className="inline-flex items-center gap-2 rounded-full bg-rust px-5 py-2.5 text-xs uppercase tracking-[0.18em] text-primary-foreground transition-transform hover:scale-[1.02]"
+          className="inline-flex items-center gap-2 rounded-full border border-ink/20 bg-background px-4 py-2 text-[11px] uppercase tracking-[0.2em] text-ink hover:bg-secondary"
         >
           <Printer size={14} /> Print / Save as PDF
+        </button>
+        <button
+          onClick={handleSend}
+          className="inline-flex items-center gap-2 rounded-full bg-rust px-5 py-2.5 text-xs uppercase tracking-[0.18em] text-primary-foreground transition-transform hover:scale-[1.02]"
+        >
+          {sentTo ? (
+            <>
+              <Check size={14} /> Sent to {sentTo.name.split(" ")[0]}
+            </>
+          ) : (
+            <>
+              <Send size={14} /> Send this to me
+            </>
+          )}
         </button>
       </div>
 
