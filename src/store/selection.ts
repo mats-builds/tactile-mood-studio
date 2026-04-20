@@ -3,6 +3,17 @@ import { useEffect, useState } from "react";
 const KEY = "moods.selection.v1";
 const PALETTE_KEY = "moods.palette.v1";
 const SCENE_KEY = "moods.scene.v1";
+const LAYOUT_KEY = "moods.layout.v1";
+
+export type LayoutOverride = {
+  /** position in % of the room scene container */
+  xPct?: number;
+  yPct?: number;
+  /** scale multiplier applied on top of dimension-derived size */
+  scale?: number;
+};
+
+export type LayoutMap = Record<string, LayoutOverride>;
 
 type Listener = () => void;
 const listeners = new Set<Listener>();
@@ -10,6 +21,7 @@ const listeners = new Set<Listener>();
 let selected: Set<string> = new Set();
 let paletteId: string | null = null;
 let sceneId: string | null = null;
+let layout: LayoutMap = {};
 let hydrated = false;
 
 function load() {
@@ -21,6 +33,8 @@ function load() {
     if (p) paletteId = p;
     const s = window.localStorage.getItem(SCENE_KEY);
     if (s) sceneId = s;
+    const l = window.localStorage.getItem(LAYOUT_KEY);
+    if (l) layout = JSON.parse(l) as LayoutMap;
   } catch {
     /* ignore */
   }
@@ -39,6 +53,7 @@ function persist() {
   else window.localStorage.removeItem(PALETTE_KEY);
   if (sceneId) window.localStorage.setItem(SCENE_KEY, sceneId);
   else window.localStorage.removeItem(SCENE_KEY);
+  window.localStorage.setItem(LAYOUT_KEY, JSON.stringify(layout));
 }
 
 function emit() {
@@ -77,6 +92,28 @@ export const selectionStore = {
     persist();
     emit();
   },
+  getLayout: () => layout,
+  setLayoutFor(id: string, patch: Partial<LayoutOverride>) {
+    hydrate();
+    layout = { ...layout, [id]: { ...layout[id], ...patch } };
+    persist();
+    emit();
+  },
+  resetLayoutFor(id: string) {
+    hydrate();
+    if (!layout[id]) return;
+    const next = { ...layout };
+    delete next[id];
+    layout = next;
+    persist();
+    emit();
+  },
+  resetAllLayout() {
+    hydrate();
+    layout = {};
+    persist();
+    emit();
+  },
   subscribe(l: Listener) {
     listeners.add(l);
     return () => {
@@ -105,5 +142,10 @@ export function useSelection() {
     setPaletteId: (id: string | null) => selectionStore.setPaletteId(id),
     sceneId: selectionStore.getSceneId(),
     setSceneId: (id: string | null) => selectionStore.setSceneId(id),
+    layout: selectionStore.getLayout(),
+    setLayoutFor: (id: string, patch: Partial<LayoutOverride>) =>
+      selectionStore.setLayoutFor(id, patch),
+    resetLayoutFor: (id: string) => selectionStore.resetLayoutFor(id),
+    resetAllLayout: () => selectionStore.resetAllLayout(),
   };
 }

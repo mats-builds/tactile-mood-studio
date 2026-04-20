@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { ArrowLeft, Sparkles, RefreshCw, Plus } from "lucide-react";
+import { ArrowLeft, Sparkles, RefreshCw, Plus, Pencil, Check, RotateCcw } from "lucide-react";
 import {
   catalog,
   colorMap,
@@ -26,8 +26,20 @@ export const Route = createFileRoute("/moodboard")({
 
 function MoodboardPage() {
   const navigate = useNavigate();
-  const { ids, paletteId, setPaletteId, sceneId, setSceneId, toggle } = useSelection();
+  const {
+    ids,
+    paletteId,
+    setPaletteId,
+    sceneId,
+    setSceneId,
+    toggle,
+    layout,
+    setLayoutFor,
+    resetLayoutFor,
+    resetAllLayout,
+  } = useSelection();
   const { products: userProducts } = useUserProducts();
+  const [editMode, setEditMode] = useState(false);
 
   const items = useMemo(() => {
     const merged = [...userProducts, ...catalog];
@@ -110,11 +122,54 @@ function MoodboardPage() {
 
       {/* Composed Room Scene */}
       <section className="mx-auto max-w-[1500px] px-6 md:px-10">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-[11px] uppercase tracking-display text-muted-foreground">
+            {editMode
+              ? "Drag pieces to reposition · drag the corner handle to resize"
+              : "Click Edit to rearrange and resize pieces"}
+          </p>
+          <div className="flex items-center gap-2">
+            {editMode && (
+              <button
+                onClick={() => {
+                  if (window.confirm("Reset all positions and sizes to defaults?")) {
+                    resetAllLayout();
+                  }
+                }}
+                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5 text-[11px] uppercase tracking-[0.18em] text-foreground hover:bg-secondary"
+              >
+                <RotateCcw size={12} /> Reset all
+              </button>
+            )}
+            <button
+              onClick={() => setEditMode((v) => !v)}
+              className={`inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-[11px] uppercase tracking-[0.18em] transition ${
+                editMode
+                  ? "bg-rust text-primary-foreground hover:scale-[1.02]"
+                  : "border border-ink bg-ink text-background hover:scale-[1.02]"
+              }`}
+            >
+              {editMode ? (
+                <>
+                  <Check size={14} /> Save
+                </>
+              ) : (
+                <>
+                  <Pencil size={12} /> Edit
+                </>
+              )}
+            </button>
+          </div>
+        </div>
         <RoomScene
           items={items}
           palette={activePalette}
           scene={activeScene}
           onRemove={toggle}
+          editMode={editMode}
+          layout={layout}
+          onLayoutChange={setLayoutFor}
+          onResetItem={resetLayoutFor}
         />
       </section>
 
