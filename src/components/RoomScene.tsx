@@ -335,7 +335,7 @@ function Piece({
   return (
     <div
       className={`group/piece absolute flex items-end justify-center ${
-        editMode ? "cursor-move" : ""
+        editMode ? (selected ? "cursor-move" : "cursor-pointer") : ""
       } ${dragging || resizing ? "z-50" : ""}`}
       style={{
         left: `${localX}%`,
@@ -343,7 +343,7 @@ function Piece({
         width: `${liveWidth}%`,
         height: `${liveHeight}%`,
         transform: "translate(-50%, -100%)",
-        zIndex: dragging || resizing ? 100 : undefined,
+        zIndex: dragging || resizing ? 100 : selected ? 40 : undefined,
         touchAction: editMode ? "none" : undefined,
       }}
       onPointerDown={editMode ? startDrag : undefined}
@@ -364,12 +364,12 @@ function Piece({
       />
 
       {/* edit-mode frame */}
-      {editMode && (
+      {editMode && selected && (
         <div className="pointer-events-none absolute inset-0 rounded-md ring-2 ring-rust/70" />
       )}
 
       {/* resize handle (bottom-right) */}
-      {editMode && (
+      {editMode && selected && (
         <button
           aria-label={`Resize ${product.name}`}
           onPointerDown={startResize}
@@ -380,7 +380,7 @@ function Piece({
       )}
 
       {/* reset handle (bottom-left) */}
-      {editMode && onReset && (
+      {editMode && selected && onReset && (
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -403,7 +403,7 @@ function Piece({
           ×
         </button>
       )}
-      {onRemove && editMode && (
+      {onRemove && editMode && selected && (
         <button
           onClick={(e) => {
             e.stopPropagation();
