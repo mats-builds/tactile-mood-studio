@@ -262,6 +262,12 @@ function Piece({
 
   const startDrag = (e: React.PointerEvent) => {
     if (!editMode || !containerRef.current) return;
+    // First click selects; subsequent drags move.
+    if (!selected) {
+      e.stopPropagation();
+      onSelect();
+      return;
+    }
     e.preventDefault();
     e.stopPropagation();
     const rect = containerRef.current.getBoundingClientRect();
