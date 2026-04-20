@@ -142,12 +142,15 @@ export function AddWithUrlDialog({
               <label className="flex items-center gap-2 rounded-2xl border border-border bg-card px-4 py-3 focus-within:border-ink">
                 <Link2 size={16} className="text-muted-foreground" />
                 <input
-                  type="url"
+                  type="text"
+                  inputMode="url"
+                  autoComplete="off"
+                  spellCheck={false}
                   required
                   autoFocus
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
-                  placeholder="https://www.sklum.com/..."
+                  placeholder="Paste any product URL — ikea.com, wayfair.com, etc."
                   className="flex-1 bg-transparent text-sm text-ink placeholder:text-muted-foreground focus:outline-none"
                   disabled={status === "loading"}
                 />
