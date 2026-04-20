@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Check, Plus, ExternalLink, X } from "lucide-react";
 import { type Product } from "@/data/catalog";
 
@@ -27,6 +27,9 @@ export function ProductDetail({ product, open, onOpenChange, selected, onToggle 
     >
       <DialogContent className="max-w-5xl gap-0 overflow-hidden border-border bg-background p-0 sm:rounded-3xl">
         <DialogTitle className="sr-only">{product.name}</DialogTitle>
+          <DialogDescription className="sr-only">
+            Product details, gallery and actions for {product.name}.
+          </DialogDescription>
         <button
           onClick={() => onOpenChange(false)}
           aria-label="Close"

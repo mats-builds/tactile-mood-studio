@@ -148,19 +148,22 @@ function CatalogPage() {
             const selected = has(p.id);
             return (
               <article key={p.id} className="group relative">
-                <button
-                  type="button"
-                  onClick={() => setActive(p)}
-                  aria-label={`View ${p.name}`}
-                  className="relative block aspect-[4/5] w-full overflow-hidden rounded-2xl bg-secondary/40 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-ink"
-                >
+                <div className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl bg-secondary/40">
+                  <button
+                    type="button"
+                    onClick={() => setActive(p)}
+                    aria-label={`View ${p.name}`}
+                    className="absolute inset-0 block text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-ink"
+                  >
                   <img
                     src={p.src}
                     alt={p.name}
                     loading="lazy"
                     className="absolute inset-0 h-full w-full object-contain p-6 transition-transform duration-500 group-hover:scale-[1.04]"
                   />
+                  </button>
                   <button
+                    type="button"
                     onClick={(e) => {
                       e.stopPropagation();
                       toggle(p.id);
@@ -175,7 +178,7 @@ function CatalogPage() {
                   >
                     {selected ? <Check size={16} strokeWidth={2.4} /> : <Plus size={16} />}
                   </button>
-                </button>
+                </div>
                 <button
                   type="button"
                   onClick={() => setActive(p)}
