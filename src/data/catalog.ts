@@ -20,6 +20,15 @@ import art2 from "@/assets/art2.png";
 import sofaCataline from "@/assets/sofa-cataline.png";
 import sofaCataline2 from "@/assets/sofa-cataline-2.jpg";
 import sofaCataline3 from "@/assets/sofa-cataline-3.jpg";
+import sofaFogler from "@/assets/sofa-fogler.png";
+import sofaFogler1 from "@/assets/sofa-fogler-1.jpg";
+import sofaFogler2 from "@/assets/sofa-fogler-2.jpg";
+import chairOlea from "@/assets/chair-olea.png";
+import chairOlea1 from "@/assets/chair-olea-1.jpg";
+import chairOlea2 from "@/assets/chair-olea-2.jpg";
+import chairJolie from "@/assets/chair-jolie.png";
+import chairJolie1 from "@/assets/chair-jolie-1.jpg";
+import chairJolie2 from "@/assets/chair-jolie-2.jpg";
 
 export type Category =
   | "Seating"
