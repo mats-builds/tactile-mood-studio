@@ -83,6 +83,12 @@ export function RoomScene({
   onResetItem,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  // Clear selection when leaving edit mode
+  useEffect(() => {
+    if (!editMode) setSelectedId(null);
+  }, [editMode]);
 
   // Compute per-item index within its role group for default placement
   const placement = useMemo(() => {
@@ -117,6 +123,10 @@ export function RoomScene({
         editMode ? "ring-2 ring-rust/60" : ""
       }`}
       style={bgStyle}
+      onPointerDown={(e) => {
+        // click on empty area clears selection
+        if (editMode && e.target === e.currentTarget) setSelectedId(null);
+      }}
     >
       {scene.kind === "image" && scene.src && (
         <img
@@ -184,6 +194,8 @@ export function RoomScene({
             heightPct={heightPct}
             scale={scale}
             editMode={editMode}
+            selected={selectedId === item.id}
+            onSelect={() => setSelectedId(item.id)}
             containerRef={containerRef}
             onRemove={onRemove}
             onLayoutChange={onLayoutChange}
@@ -204,6 +216,8 @@ type PieceProps = {
   heightPct: number;
   scale: number;
   editMode: boolean;
+  selected: boolean;
+  onSelect: () => void;
   containerRef: React.RefObject<HTMLDivElement | null>;
   onRemove?: (id: string) => void;
   onLayoutChange?: (id: string, patch: Partial<LayoutOverride>) => void;
@@ -219,6 +233,8 @@ function Piece({
   heightPct,
   scale,
   editMode,
+  selected,
+  onSelect,
   containerRef,
   onRemove,
   onLayoutChange,
@@ -246,6 +262,12 @@ function Piece({
 
   const startDrag = (e: React.PointerEvent) => {
     if (!editMode || !containerRef.current) return;
+    // First click selects; subsequent drags move.
+    if (!selected) {
+      e.stopPropagation();
+      onSelect();
+      return;
+    }
     e.preventDefault();
     e.stopPropagation();
     const rect = containerRef.current.getBoundingClientRect();
@@ -313,7 +335,7 @@ function Piece({
   return (
     <div
       className={`group/piece absolute flex items-end justify-center ${
-        editMode ? "cursor-move" : ""
+        editMode ? (selected ? "cursor-move" : "cursor-pointer") : ""
       } ${dragging || resizing ? "z-50" : ""}`}
       style={{
         left: `${localX}%`,
@@ -321,7 +343,7 @@ function Piece({
         width: `${liveWidth}%`,
         height: `${liveHeight}%`,
         transform: "translate(-50%, -100%)",
-        zIndex: dragging || resizing ? 100 : undefined,
+        zIndex: dragging || resizing ? 100 : selected ? 40 : undefined,
         touchAction: editMode ? "none" : undefined,
       }}
       onPointerDown={editMode ? startDrag : undefined}
@@ -342,12 +364,12 @@ function Piece({
       />
 
       {/* edit-mode frame */}
-      {editMode && (
+      {editMode && selected && (
         <div className="pointer-events-none absolute inset-0 rounded-md ring-2 ring-rust/70" />
       )}
 
       {/* resize handle (bottom-right) */}
-      {editMode && (
+      {editMode && selected && (
         <button
           aria-label={`Resize ${product.name}`}
           onPointerDown={startResize}
@@ -358,7 +380,7 @@ function Piece({
       )}
 
       {/* reset handle (bottom-left) */}
-      {editMode && onReset && (
+      {editMode && selected && onReset && (
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -381,7 +403,7 @@ function Piece({
           ×
         </button>
       )}
-      {onRemove && editMode && (
+      {onRemove && editMode && selected && (
         <button
           onClick={(e) => {
             e.stopPropagation();
