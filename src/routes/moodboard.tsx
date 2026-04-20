@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { ArrowLeft, Sparkles, RefreshCw, Plus, Pencil, Check, RotateCcw, ImagePlus, FileText } from "lucide-react";
+import { ArrowLeft, Sparkles, RefreshCw, Plus, Pencil, Check, RotateCcw, ImagePlus, FileText, Maximize2 } from "lucide-react";
 import {
   catalog,
   colorMap,
@@ -14,6 +14,7 @@ import { useSelection } from "@/store/selection";
 import { useUserProducts } from "@/store/user-products";
 import { RoomScene } from "@/components/RoomScene";
 import { MatchFromImageDialog } from "@/components/MatchFromImageDialog";
+import { FullscreenComposer } from "@/components/FullscreenComposer";
 
 export const Route = createFileRoute("/moodboard")({
   component: MoodboardPage,
@@ -42,6 +43,7 @@ function MoodboardPage() {
   const { products: userProducts } = useUserProducts();
   const [editMode, setEditMode] = useState(false);
   const [matchOpen, setMatchOpen] = useState(false);
+  const [fullOpen, setFullOpen] = useState(false);
 
   const items = useMemo(() => {
     const merged = [...userProducts, ...catalog];
@@ -189,6 +191,12 @@ function MoodboardPage() {
                   <Pencil size={12} /> Edit
                 </>
               )}
+            </button>
+            <button
+              onClick={() => setFullOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5 text-[11px] uppercase tracking-[0.18em] text-foreground hover:bg-secondary"
+            >
+              <Maximize2 size={12} /> Fullscreen
             </button>
           </div>
         </div>
@@ -365,6 +373,8 @@ function MoodboardPage() {
           </button>
         </div>
       </section>
+
+      <FullscreenComposer open={fullOpen} onClose={() => setFullOpen(false)} />
     </main>
   );
 }
