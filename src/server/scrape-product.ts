@@ -3,7 +3,7 @@ import { z } from "zod";
 import Firecrawl from "@mendable/firecrawl-js";
 
 const inputSchema = z.object({
-  url: z.string().url(),
+  url: z.string().min(1),
 });
 
 const productSchema = {
@@ -46,7 +46,7 @@ const productSchema = {
         "Up to 4 additional product images — lifestyle / in-context shots are fine here.",
     },
   },
-  required: ["name", "image_url"],
+  required: ["name"],
 };
 
 type ScrapedProduct = {
@@ -66,9 +66,48 @@ type ScrapedProduct = {
 
 const IMAGE_URL_RE = /https?:\/\/[^\s"'<>]+?\.(?:png|jpe?g|webp|avif)(?:\?[^\s"'<>]*)?/gi;
 const IMAGE_ATTR_RE =
-  /(?:src|data-src|data-zoom-image|data-image-large-src|href)=["']([^"']+\.(?:png|jpe?g|webp|avif)(?:\?[^"']*)?)["']/gi;
+  /(?:src|data-src|data-zoom-image|data-image-large-src|data-large_image|data-srcset|srcset|href|content)=["']([^"']+\.(?:png|jpe?g|webp|avif)(?:\?[^"']*)?)["']/gi;
+const META_OG_IMAGE_RE =
+  /<meta[^>]+(?:property|name)=["'](?:og:image(?::secure_url)?|twitter:image)["'][^>]+content=["']([^"']+)["']/gi;
+const META_OG_IMAGE_ALT_RE =
+  /<meta[^>]+content=["']([^"']+)["'][^>]+(?:property|name)=["'](?:og:image(?::secure_url)?|twitter:image)["']/gi;
+const JSONLD_RE =
+  /<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi;
+const TITLE_TAG_RE = /<title[^>]*>([^<]+)<\/title>/i;
+const META_OG_TITLE_RE =
+  /<meta[^>]+(?:property|name)=["']og:title["'][^>]+content=["']([^"']+)["']/i;
+const META_OG_DESC_RE =
+  /<meta[^>]+(?:property|name)=["'](?:og:description|description)["'][^>]+content=["']([^"']+)["']/i;
+const META_OG_SITE_RE =
+  /<meta[^>]+(?:property|name)=["']og:site_name["'][^>]+content=["']([^"']+)["']/i;
+
 const BACKGROUND_REMOVAL_CREDITS_ERROR =
   "Background removal is unavailable right now because the image credits are exhausted.";
+
+function normalizeUrl(raw: string): string {
+  let url = raw.trim();
+  if (!url) throw new Error("Please paste a product URL.");
+  // Strip surrounding angle brackets / quotes some users paste.
+  url = url.replace(/^[<"']+|[>"']+$/g, "");
+  if (!/^https?:\/\//i.test(url)) {
+    url = `https://${url}`;
+  }
+  try {
+    const parsed = new URL(url);
+    return parsed.toString();
+  } catch {
+    throw new Error("That doesn't look like a valid URL — check for typos.");
+  }
+}
+
+function decodeEntities(s: string) {
+  return s
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">");
+}
 
 function uniqueStrings(values: Array<string | undefined>) {
   return Array.from(new Set(values.filter((value): value is string => Boolean(value))));
@@ -83,10 +122,11 @@ function scoreImageUrl(url: string) {
   }
   if (lower.includes("white") || lower.includes("plain")) score += 10;
   if (lower.includes("large_default")) score += 35;
+  if (lower.includes("zoom") || lower.includes("_xl") || lower.includes("2048") || lower.includes("1500") || lower.includes("1200")) score += 20;
   if (lower.includes("default")) score += 16;
   if (lower.includes("product")) score += 8;
+  if (lower.includes("og-image") || lower.includes("og_image") || lower.includes("share")) score += 12;
   if (lower.includes("gallery")) score -= 2;
-  if (lower.includes("/wk/")) score -= 6;
   if (
     lower.includes("room") ||
     lower.includes("lifestyle") ||
@@ -103,53 +143,165 @@ function scoreImageUrl(url: string) {
     lower.includes("logo") ||
     lower.includes("swatch") ||
     lower.includes("sprite") ||
-    lower.includes("promo")
+    lower.includes("placeholder") ||
+    lower.includes("blank") ||
+    lower.includes("loading")
   ) {
-    score -= 40;
+    score -= 60;
   }
 
   return score;
+}
+
+function absoluteUrl(maybeRelative: string, base: string): string | undefined {
+  try {
+    return new URL(decodeEntities(maybeRelative), base).toString();
+  } catch {
+    return undefined;
+  }
 }
 
 function extractImageUrlsFromHtml(html: string, pageUrl: string) {
   const matches = new Set<string>();
 
   for (const match of html.matchAll(IMAGE_URL_RE)) {
-    matches.add(match[0].replace(/&amp;/g, "&"));
+    matches.add(decodeEntities(match[0]));
   }
-
   for (const match of html.matchAll(IMAGE_ATTR_RE)) {
-    try {
-      matches.add(new URL(match[1].replace(/&amp;/g, "&"), pageUrl).toString());
-    } catch {
-      /* ignore invalid image urls */
+    // srcset can contain multiple URLs separated by commas; grab each.
+    const raw = match[1];
+    for (const piece of raw.split(",")) {
+      const u = piece.trim().split(/\s+/)[0];
+      const abs = absoluteUrl(u, pageUrl);
+      if (abs) matches.add(abs);
     }
   }
+  for (const match of html.matchAll(META_OG_IMAGE_RE)) {
+    const abs = absoluteUrl(match[1], pageUrl);
+    if (abs) matches.add(abs);
+  }
+  for (const match of html.matchAll(META_OG_IMAGE_ALT_RE)) {
+    const abs = absoluteUrl(match[1], pageUrl);
+    if (abs) matches.add(abs);
+  }
 
-  return Array.from(matches).filter((url) => scoreImageUrl(url) > -20);
+  return Array.from(matches).filter((url) => scoreImageUrl(url) > -50);
 }
 
-async function fetchPageImages(url: string) {
+type JsonLdProduct = {
+  name?: string;
+  brand?: string;
+  description?: string;
+  image?: string[];
+  price?: string;
+};
+
+function walkJsonLd(node: unknown, out: JsonLdProduct[]) {
+  if (!node) return;
+  if (Array.isArray(node)) {
+    for (const item of node) walkJsonLd(item, out);
+    return;
+  }
+  if (typeof node !== "object") return;
+  const obj = node as Record<string, unknown>;
+  const t = obj["@type"];
+  const isProduct =
+    t === "Product" ||
+    (Array.isArray(t) && t.includes("Product")) ||
+    typeof obj.sku === "string" ||
+    typeof obj.gtin === "string";
+  if (isProduct) {
+    const images: string[] = [];
+    const img = obj.image;
+    if (typeof img === "string") images.push(img);
+    else if (Array.isArray(img)) {
+      for (const i of img) {
+        if (typeof i === "string") images.push(i);
+        else if (i && typeof i === "object" && typeof (i as { url?: unknown }).url === "string") {
+          images.push((i as { url: string }).url);
+        }
+      }
+    } else if (img && typeof img === "object" && typeof (img as { url?: unknown }).url === "string") {
+      images.push((img as { url: string }).url);
+    }
+    let brand: string | undefined;
+    const b = obj.brand;
+    if (typeof b === "string") brand = b;
+    else if (b && typeof b === "object" && typeof (b as { name?: unknown }).name === "string") {
+      brand = (b as { name: string }).name;
+    }
+    let price: string | undefined;
+    const offers = obj.offers as Record<string, unknown> | Record<string, unknown>[] | undefined;
+    const firstOffer = Array.isArray(offers) ? offers[0] : offers;
+    if (firstOffer && typeof firstOffer === "object") {
+      const p = firstOffer.price ?? firstOffer.lowPrice;
+      const cur = firstOffer.priceCurrency;
+      if (p !== undefined) price = `${cur ? `${cur} ` : ""}${p}`.trim();
+    }
+    out.push({
+      name: typeof obj.name === "string" ? obj.name : undefined,
+      brand,
+      description: typeof obj.description === "string" ? obj.description : undefined,
+      image: images,
+      price,
+    });
+  }
+  for (const v of Object.values(obj)) walkJsonLd(v, out);
+}
+
+function extractJsonLdProducts(html: string): JsonLdProduct[] {
+  const products: JsonLdProduct[] = [];
+  for (const m of html.matchAll(JSONLD_RE)) {
+    const raw = m[1].trim();
+    try {
+      const parsed = JSON.parse(raw);
+      walkJsonLd(parsed, products);
+    } catch {
+      /* malformed JSON-LD — skip */
+    }
+  }
+  return products;
+}
+
+type FetchedPage = { html: string; finalUrl: string };
+
+async function fetchPage(url: string): Promise<FetchedPage | null> {
   try {
     const response = await fetch(url, {
-      headers: { "user-agent": "Mozilla/5.0 (compatible; MOODS/1.0)" },
+      headers: {
+        "user-agent":
+          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36",
+        accept: "text/html,application/xhtml+xml",
+        "accept-language": "en-US,en;q=0.9",
+      },
+      redirect: "follow",
     });
-    if (!response.ok) return [];
+    if (!response.ok) return null;
     const html = await response.text();
-    return extractImageUrlsFromHtml(html, url);
+    return { html, finalUrl: response.url || url };
   } catch {
-    return [];
+    return null;
   }
+}
+
+function metaFromHtml(html: string) {
+  const title =
+    html.match(META_OG_TITLE_RE)?.[1] ||
+    html.match(TITLE_TAG_RE)?.[1] ||
+    undefined;
+  const desc = html.match(META_OG_DESC_RE)?.[1];
+  const site = html.match(META_OG_SITE_RE)?.[1];
+  return {
+    title: title ? decodeEntities(title).trim() : undefined,
+    description: desc ? decodeEntities(desc).trim() : undefined,
+    site: site ? decodeEntities(site).trim() : undefined,
+  };
 }
 
 async function removeBackground(imageUrl: string) {
   const apiKey = process.env.LOVABLE_API_KEY;
   if (!apiKey) return undefined;
 
-  // Build a list of source URLs to try in order. Gemini's image model is
-  // picky: webp often returns empty, and some CDNs block its fetcher. We
-  // try inline base64 first (rewriting webp → jpeg via mime swap if the
-  // CDN supports it), then fall back to the raw URL.
   const candidates: string[] = [];
   if (/^data:/i.test(imageUrl)) {
     candidates.push(imageUrl);
@@ -173,13 +325,10 @@ async function removeBackground(imageUrl: string) {
         const ct =
           imgRes.headers.get("content-type")?.split(";")[0]?.trim().toLowerCase() ||
           "";
-        // Sniff real type from magic bytes — CDNs sometimes lie.
         let mime = ct || "image/jpeg";
         if (buf[0] === 0xff && buf[1] === 0xd8) mime = "image/jpeg";
         else if (buf[0] === 0x89 && buf[1] === 0x50) mime = "image/png";
         else if (buf[0] === 0x52 && buf[1] === 0x49) mime = "image/webp";
-        // Gemini handles png/jpeg most reliably. For webp, still try inline
-        // (sometimes works) but ALSO queue png/jpeg-labelled fallbacks.
         candidates.push(`data:${mime};base64,${b64}`);
         if (mime === "image/webp") {
           candidates.push(`data:image/png;base64,${b64}`);
@@ -197,32 +346,32 @@ async function removeBackground(imageUrl: string) {
   for (const inlineUrl of candidates) {
     try {
       const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash-image",
-        messages: [
-          {
-            role: "user",
-            content: [
-              {
-                type: "text",
-                text:
-                  "Isolate the main furniture product in this image and place it on a fully transparent background. Erase EVERYTHING else: the floor, walls, room, props, shadows, gradients and any backdrop colour. Keep the product pixel-accurate — same shape, proportions, materials, colours, perspective and lighting. Do not redraw, restyle or add elements. Return a clean catalog packshot PNG with an alpha channel.",
-              },
-              {
-                type: "image_url",
-                image_url: { url: inlineUrl },
-              },
-            ],
-          },
-        ],
-        modalities: ["image", "text"],
-      }),
-    });
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash-image",
+          messages: [
+            {
+              role: "user",
+              content: [
+                {
+                  type: "text",
+                  text:
+                    "Isolate the main furniture product in this image and place it on a fully transparent background. Erase EVERYTHING else: the floor, walls, room, props, shadows, gradients and any backdrop colour. Keep the product pixel-accurate — same shape, proportions, materials, colours, perspective and lighting. Do not redraw, restyle or add elements. Return a clean catalog packshot PNG with an alpha channel.",
+                },
+                {
+                  type: "image_url",
+                  image_url: { url: inlineUrl },
+                },
+              ],
+            },
+          ],
+          modalities: ["image", "text"],
+        }),
+      });
 
       if (!response.ok) {
         if (response.status === 402) {
@@ -256,48 +405,119 @@ async function removeBackground(imageUrl: string) {
   return undefined;
 }
 
-export const scrapeProduct = createServerFn({ method: "POST" })
-  .inputValidator((input: unknown) => inputSchema.parse(input))
-  .handler(async ({ data }): Promise<ScrapedProduct> => {
-    const apiKey = process.env.FIRECRAWL_API_KEY;
-    if (!apiKey) {
-      throw new Error("FIRECRAWL_API_KEY is not configured");
-    }
-    const firecrawl = new Firecrawl({ apiKey });
-    const result = await firecrawl.scrape(data.url, {
-      formats: [
-        { type: "json", schema: productSchema } as never,
-      ],
+async function tryFirecrawlJson(url: string, apiKey: string) {
+  const firecrawl = new Firecrawl({ apiKey });
+  try {
+    const result = await firecrawl.scrape(url, {
+      formats: [{ type: "json", schema: productSchema } as never],
       onlyMainContent: true,
     });
     const json =
       (result as { json?: Record<string, unknown> }).json ??
       (result as { data?: { json?: Record<string, unknown> } }).data?.json;
-    if (!json || !json.name || !json.image_url) {
-      throw new Error("Could not extract product info from this page");
+    return (json as Record<string, unknown>) ?? null;
+  } catch (err) {
+    console.warn("firecrawl json scrape failed", err);
+    return null;
+  }
+}
+
+async function tryFirecrawlHtml(url: string, apiKey: string) {
+  const firecrawl = new Firecrawl({ apiKey });
+  try {
+    const result = await firecrawl.scrape(url, {
+      formats: ["html", "markdown"],
+    });
+    const html =
+      (result as { html?: string }).html ??
+      (result as { data?: { html?: string } }).data?.html;
+    return typeof html === "string" ? html : null;
+  } catch (err) {
+    console.warn("firecrawl html scrape failed", err);
+    return null;
+  }
+}
+
+export const scrapeProduct = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => inputSchema.parse(input))
+  .handler(async ({ data }): Promise<ScrapedProduct> => {
+    const sourceUrl = normalizeUrl(data.url);
+    const apiKey = process.env.FIRECRAWL_API_KEY;
+
+    // Run direct fetch and Firecrawl JSON in parallel — direct fetch gives us
+    // og:image / JSON-LD even if Firecrawl times out or extracts nothing.
+    const [directPage, firecrawlJson] = await Promise.all([
+      fetchPage(sourceUrl),
+      apiKey ? tryFirecrawlJson(sourceUrl, apiKey) : Promise.resolve(null),
+    ]);
+
+    let html = directPage?.html ?? "";
+    const finalUrl = directPage?.finalUrl ?? sourceUrl;
+
+    // If direct fetch was blocked (403/empty), try Firecrawl HTML as fallback.
+    if (!html && apiKey) {
+      const fc = await tryFirecrawlHtml(sourceUrl, apiKey);
+      if (fc) html = fc;
     }
+
+    const jsonLd = html ? extractJsonLdProducts(html) : [];
+    const meta = html ? metaFromHtml(html) : { title: undefined, description: undefined, site: undefined };
+    const pageImages = html ? extractImageUrlsFromHtml(html, finalUrl) : [];
+    const ldImages = jsonLd.flatMap((p) => p.image ?? []);
+
     const str = (v: unknown): string | undefined =>
-      typeof v === "string" ? v : undefined;
+      typeof v === "string" && v.trim().length > 0 ? v.trim() : undefined;
     const num = (v: unknown): number | undefined =>
       typeof v === "number" && Number.isFinite(v) ? v : undefined;
-    const firecrawlShowcase = str(json.image_url);
-    const firecrawlGallery = Array.isArray(json.gallery)
-      ? (json.gallery as unknown[]).filter((x): x is string => typeof x === "string")
+
+    // Merge sources with priority: Firecrawl JSON > JSON-LD > meta tags > URL host.
+    const fcJson = firecrawlJson ?? {};
+    const firstLd = jsonLd[0];
+    const hostname = (() => {
+      try { return new URL(finalUrl).hostname.replace(/^www\./, ""); } catch { return undefined; }
+    })();
+
+    const name =
+      str(fcJson.name) ?? str(firstLd?.name) ?? str(meta.title);
+    const maker =
+      str(fcJson.maker) ?? str(firstLd?.brand) ?? str(meta.site) ?? hostname;
+    const description =
+      str(fcJson.description) ?? str(firstLd?.description) ?? str(meta.description);
+    const price = str(fcJson.price) ?? str(firstLd?.price);
+
+    const firecrawlShowcase = str(fcJson.image_url);
+    const firecrawlGallery = Array.isArray(fcJson.gallery)
+      ? (fcJson.gallery as unknown[]).filter((x): x is string => typeof x === "string")
       : [];
-    const pageImages = await fetchPageImages(data.url);
-    const allImages = uniqueStrings([...pageImages, firecrawlShowcase, ...firecrawlGallery]).sort(
-      (a, b) => scoreImageUrl(b) - scoreImageUrl(a),
-    );
-    const showcaseImage = allImages[0] ?? firecrawlShowcase;
+
+    const allImages = uniqueStrings([
+      firecrawlShowcase,
+      ...ldImages,
+      ...firecrawlGallery,
+      ...pageImages,
+    ])
+      .map((u) => absoluteUrl(u, finalUrl) ?? u)
+      .sort((a, b) => scoreImageUrl(b) - scoreImageUrl(a));
+
+    const showcaseImage = allImages[0];
+
+    if (!name && !showcaseImage) {
+      throw new Error(
+        "Couldn't read that page. It may require login, block scrapers, or not be a product page. Try a different URL.",
+      );
+    }
+    if (!name) {
+      throw new Error(
+        "Found images but no product name on that page. Try the main product page URL.",
+      );
+    }
+
     let cleanedShowcase: string | undefined;
     if (showcaseImage) {
       try {
         cleanedShowcase = await removeBackground(showcaseImage);
       } catch (err) {
-        if (
-          err instanceof Error &&
-          err.message === BACKGROUND_REMOVAL_CREDITS_ERROR
-        ) {
+        if (err instanceof Error && err.message === BACKGROUND_REMOVAL_CREDITS_ERROR) {
           console.warn(err.message);
         } else {
           console.error("initial background removal failed", err);
@@ -310,16 +530,16 @@ export const scrapeProduct = createServerFn({ method: "POST" })
     ]).slice(0, 8);
 
     return {
-      sourceUrl: data.url,
-      name: str(json.name),
-      maker: str(json.maker),
-      price: str(json.price),
-      description: str(json.description),
-      category: str(json.category),
-      role: str(json.role),
-      width_cm: num(json.width_cm),
-      height_cm: num(json.height_cm),
-      depth_cm: num(json.depth_cm),
+      sourceUrl: finalUrl,
+      name,
+      maker,
+      price,
+      description,
+      category: str(fcJson.category),
+      role: str(fcJson.role),
+      width_cm: num(fcJson.width_cm),
+      height_cm: num(fcJson.height_cm),
+      depth_cm: num(fcJson.depth_cm),
       image_url: cleanedShowcase ?? showcaseImage,
       gallery: gallery.length > 0 ? gallery : undefined,
     };
