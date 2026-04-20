@@ -334,20 +334,23 @@ function PanelToggle({
   active,
   onClick,
   label,
+  icon,
 }: {
   active: boolean;
   onClick: () => void;
   label: string;
+  icon?: React.ReactNode;
 }) {
   return (
     <button
       onClick={onClick}
-      className={`rounded-full px-3 py-1.5 text-[10px] uppercase tracking-[0.2em] transition-colors ${
+      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[10px] uppercase tracking-[0.2em] transition-colors ${
         active
           ? "bg-ink text-background"
           : "text-ink hover:bg-secondary"
       }`}
     >
+      {icon}
       {label}
     </button>
   );
