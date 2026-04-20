@@ -2,12 +2,14 @@ import { useEffect, useState } from "react";
 
 const KEY = "moods.selection.v1";
 const PALETTE_KEY = "moods.palette.v1";
+const SCENE_KEY = "moods.scene.v1";
 
 type Listener = () => void;
 const listeners = new Set<Listener>();
 
 let selected: Set<string> = new Set();
 let paletteId: string | null = null;
+let sceneId: string | null = null;
 
 function load() {
   if (typeof window === "undefined") return;
@@ -16,6 +18,8 @@ function load() {
     if (raw) selected = new Set(JSON.parse(raw));
     const p = window.localStorage.getItem(PALETTE_KEY);
     if (p) paletteId = p;
+    const s = window.localStorage.getItem(SCENE_KEY);
+    if (s) sceneId = s;
   } catch {
     /* ignore */
   }
@@ -27,6 +31,8 @@ function persist() {
   window.localStorage.setItem(KEY, JSON.stringify(Array.from(selected)));
   if (paletteId) window.localStorage.setItem(PALETTE_KEY, paletteId);
   else window.localStorage.removeItem(PALETTE_KEY);
+  if (sceneId) window.localStorage.setItem(SCENE_KEY, sceneId);
+  else window.localStorage.removeItem(SCENE_KEY);
 }
 
 function emit() {
@@ -54,6 +60,12 @@ export const selectionStore = {
     persist();
     emit();
   },
+  getSceneId: () => sceneId,
+  setSceneId(id: string | null) {
+    sceneId = id;
+    persist();
+    emit();
+  },
   subscribe(l: Listener) {
     listeners.add(l);
     return () => {
@@ -78,5 +90,7 @@ export function useSelection() {
     clear: () => selectionStore.clear(),
     paletteId: selectionStore.getPaletteId(),
     setPaletteId: (id: string | null) => selectionStore.setPaletteId(id),
+    sceneId: selectionStore.getSceneId(),
+    setSceneId: (id: string | null) => selectionStore.setSceneId(id),
   };
 }
