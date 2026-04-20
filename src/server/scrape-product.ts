@@ -512,18 +512,8 @@ export const scrapeProduct = createServerFn({ method: "POST" })
       );
     }
 
-    let cleanedShowcase: string | undefined;
-    if (showcaseImage) {
-      try {
-        cleanedShowcase = await removeBackground(showcaseImage);
-      } catch (err) {
-        if (err instanceof Error && err.message === BACKGROUND_REMOVAL_CREDITS_ERROR) {
-          console.warn(err.message);
-        } else {
-          console.error("initial background removal failed", err);
-        }
-      }
-    }
+    // Background removal is opt-in: the user triggers it per-image from the
+    // edit dialog so they can choose which photo to clean up.
     const gallery = uniqueStrings([
       ...firecrawlGallery,
       ...allImages.filter((url) => url !== showcaseImage),
@@ -540,7 +530,7 @@ export const scrapeProduct = createServerFn({ method: "POST" })
       width_cm: num(fcJson.width_cm),
       height_cm: num(fcJson.height_cm),
       depth_cm: num(fcJson.depth_cm),
-      image_url: cleanedShowcase ?? showcaseImage,
+      image_url: showcaseImage,
       gallery: gallery.length > 0 ? gallery : undefined,
     };
   });
