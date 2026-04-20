@@ -48,9 +48,24 @@ const productSchema = {
   required: ["name", "image_url"],
 };
 
+type ScrapedProduct = {
+  sourceUrl: string;
+  name?: string;
+  maker?: string;
+  price?: string;
+  description?: string;
+  category?: string;
+  role?: string;
+  width_cm?: number;
+  height_cm?: number;
+  depth_cm?: number;
+  image_url?: string;
+  gallery?: string[];
+};
+
 export const scrapeProduct = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => inputSchema.parse(input))
-  .handler(async ({ data }) => {
+  .handler(async ({ data }): Promise<ScrapedProduct> => {
     const apiKey = process.env.FIRECRAWL_API_KEY;
     if (!apiKey) {
       throw new Error("FIRECRAWL_API_KEY is not configured");
@@ -68,8 +83,26 @@ export const scrapeProduct = createServerFn({ method: "POST" })
     if (!json || !json.name || !json.image_url) {
       throw new Error("Could not extract product info from this page");
     }
+    const str = (v: unknown): string | undefined =>
+      typeof v === "string" ? v : undefined;
+    const num = (v: unknown): number | undefined =>
+      typeof v === "number" && Number.isFinite(v) ? v : undefined;
     return {
-      ...json,
       sourceUrl: data.url,
-    } as Record<string, unknown>;
+      name: str(json.name),
+      maker: str(json.maker),
+      price: str(json.price),
+      description: str(json.description),
+      category: str(json.category),
+      role: str(json.role),
+      width_cm: num(json.width_cm),
+      height_cm: num(json.height_cm),
+      depth_cm: num(json.depth_cm),
+      image_url: str(json.image_url),
+      gallery: Array.isArray(json.gallery)
+        ? (json.gallery as unknown[])
+            .filter((x): x is string => typeof x === "string")
+            .slice(0, 4)
+        : undefined,
+    };
   });
