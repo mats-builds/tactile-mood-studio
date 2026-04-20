@@ -20,6 +20,15 @@ import art2 from "@/assets/art2.png";
 import sofaCataline from "@/assets/sofa-cataline.png";
 import sofaCataline2 from "@/assets/sofa-cataline-2.jpg";
 import sofaCataline3 from "@/assets/sofa-cataline-3.jpg";
+import sofaFogler from "@/assets/sofa-fogler.png";
+import sofaFogler1 from "@/assets/sofa-fogler-1.jpg";
+import sofaFogler2 from "@/assets/sofa-fogler-2.jpg";
+import chairOlea from "@/assets/chair-olea.png";
+import chairOlea1 from "@/assets/chair-olea-1.jpg";
+import chairOlea2 from "@/assets/chair-olea-2.jpg";
+import chairJolie from "@/assets/chair-jolie.png";
+import chairJolie1 from "@/assets/chair-jolie-1.jpg";
+import chairJolie2 from "@/assets/chair-jolie-2.jpg";
 
 export type Category =
   | "Seating"
@@ -114,7 +123,70 @@ export const catalog: Product[] = [
     sourceUrl:
       "https://www.sklum.com/nl/kopen-modulaire-vierzitsbanken/219682-3-delige-modulaire-bank-in-chenille-cataline.html",
   },
+  {
+    id: "sofa-fogler",
+    name: "Fogler 4-piece Modular Sofa with Pouf",
+    maker: "SKLUM",
+    price: "€ 1,109",
+    category: "Seating",
+    src: sofaFogler,
+    colors: ["cream", "linen", "bone"],
+    role: "ground",
+    gallery: [sofaFogler1, sofaFogler2],
+    description:
+      "A generous 4-piece modular sofa with matching pouf, upholstered in cream beige chenille. Configure the layout to suit your space — the pouf doubles as a chaise extension or standalone seat. Soft, deep seats with a relaxed silhouette built for daily lounging.",
+    details: {
+      Seats: "4 + pouf",
+      Frame: "Pine & poplar plywood",
+      Upholstery: "Cream beige chenille",
+      Collection: "Fogler",
+    },
+    sourceUrl:
+      "https://www.sklum.com/nl/kopen-modulaire-vierzitsbanken/157258-4-delige-modulaire-bank-met-poef-fogler.html",
+  },
   { id: "armchair", name: "Cane Sling Chair", maker: "Hanssen Workshop", price: "€ 1,680", category: "Seating", src: armchair, colors: ["walnut", "clay"], role: "ground" },
+  {
+    id: "chair-olea",
+    name: "Olea Oak Armchair",
+    maker: "SKLUM",
+    price: "€ 380",
+    category: "Seating",
+    src: chairOlea,
+    colors: ["walnut", "cream", "linen"],
+    role: "ground",
+    gallery: [chairOlea1, chairOlea2],
+    description:
+      "A sculptural armchair with a solid dark oak frame cradling a plush cream bouclé seat and curved back. The exposed wood structure pairs warm tones with soft texture — a tactile statement piece for a reading nook or living room.",
+    details: {
+      Frame: "Solid oak (dark stain)",
+      Upholstery: "Cream bouclé",
+      Style: "Contemporary sculptural",
+      Collection: "Olea",
+    },
+    sourceUrl:
+      "https://www.sklum.com/nl/kopen-fauteuils/215348-fauteuil-van-eikenhout-bekleed-met-olea.html",
+  },
+  {
+    id: "chair-jolie",
+    name: "Jolie Chenille Armchair",
+    maker: "SKLUM",
+    price: "€ 245",
+    category: "Seating",
+    src: chairJolie,
+    colors: ["clay", "jute", "walnut"],
+    role: "ground",
+    gallery: [chairJolie1, chairJolie2],
+    description:
+      "A rounded, enveloping armchair in wheat brown chenille on a natural wood frame. The barrel-back silhouette and slim wooden legs give it a soft, organic presence that works in modern and rustic interiors alike.",
+    details: {
+      Frame: "Natural wood",
+      Upholstery: "Wheat brown chenille",
+      Style: "Barrel-back, organic",
+      Collection: "Jolie",
+    },
+    sourceUrl:
+      "https://www.sklum.com/nl/kopen-fauteuils/191900-jolie-chenille-stoffen-fauteuil.html",
+  },
   { id: "loungechair", name: "Bouclé Lounge", maker: "Maison Cru", price: "€ 1,420", category: "Seating", src: loungechair, colors: ["cream", "linen"], role: "ground" },
   { id: "ottoman", name: "Linen Pouf", maker: "Maison Cru", price: "€ 320", category: "Seating", src: ottoman, colors: ["linen", "bone"], role: "surface" },
   { id: "table", name: "Oval Travertine Table", maker: "Casa Reni", price: "€ 2,150", category: "Tables", src: table, colors: ["travertine", "bone"], role: "surface" },
