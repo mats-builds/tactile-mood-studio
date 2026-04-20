@@ -6,6 +6,7 @@ type Listener = () => void;
 const listeners = new Set<Listener>();
 let products: Product[] = [];
 let hydrated = false;
+let lastError: string | null = null;
 
 function load() {
   if (typeof window === "undefined") return;
@@ -24,8 +25,21 @@ function hydrate() {
 }
 
 function persist() {
-  if (typeof window === "undefined") return;
-  window.localStorage.setItem(KEY, JSON.stringify(products));
+  if (typeof window === "undefined") return true;
+  try {
+    window.localStorage.setItem(KEY, JSON.stringify(products));
+    lastError = null;
+    return true;
+  } catch (err) {
+    lastError =
+      err instanceof Error
+        ? err.name === "QuotaExceededError" || /quota/i.test(err.message)
+          ? "Browser storage is full — your additions can't be saved. Remove some pieces or images and try again."
+          : err.message
+        : "Could not save your additions.";
+    console.error("user-products persist failed", err);
+    return false;
+  }
 }
 function emit() {
   listeners.forEach((l) => l());
@@ -34,12 +48,22 @@ function emit() {
 export const userProductsStore = {
   hydrate,
   list: () => products,
+  getError: () => lastError,
+  clearError: () => {
+    lastError = null;
+    emit();
+  },
   add(p: Product) {
     hydrate();
     // de-dupe by id
     products = [p, ...products.filter((x) => x.id !== p.id)];
-    persist();
+    const ok = persist();
+    if (!ok) {
+      // Roll back so UI matches storage.
+      products = products.filter((x) => x.id !== p.id);
+    }
     emit();
+    return ok;
   },
   remove(id: string) {
     hydrate();
@@ -49,9 +73,12 @@ export const userProductsStore = {
   },
   update(id: string, patch: Partial<Product>) {
     hydrate();
+    const prev = products;
     products = products.map((p) => (p.id === id ? { ...p, ...patch } : p));
-    persist();
+    const ok = persist();
+    if (!ok) products = prev;
     emit();
+    return ok;
   },
   removeImage(id: string, imageUrl: string) {
     hydrate();
@@ -94,8 +121,11 @@ export function useUserProducts() {
     products: userProductsStore.list(),
     add: (p: Product) => userProductsStore.add(p),
     remove: (id: string) => userProductsStore.remove(id),
-    update: (id: string, patch: Partial<Product>) => userProductsStore.update(id, patch),
+    update: (id: string, patch: Partial<Product>) =>
+      userProductsStore.update(id, patch),
     removeImage: (id: string, imageUrl: string) =>
       userProductsStore.removeImage(id, imageUrl),
+    error: userProductsStore.getError(),
+    clearError: () => userProductsStore.clearError(),
   };
 }

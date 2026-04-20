@@ -274,3 +274,14 @@ export const scrapeProduct = createServerFn({ method: "POST" })
       gallery: gallery.length > 0 ? gallery : undefined,
     };
   });
+
+const removeBgInputSchema = z.object({
+  imageUrl: z.string().url(),
+});
+
+export const removeImageBackground = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => removeBgInputSchema.parse(input))
+  .handler(async ({ data }): Promise<{ image: string | null }> => {
+    const cleaned = await removeBackground(data.imageUrl);
+    return { image: cleaned ?? null };
+  });
