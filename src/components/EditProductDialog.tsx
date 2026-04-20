@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { useUserProducts } from "@/store/user-products";
 import { removeImageBackground } from "@/server/scrape-product";
+import { applyAlphaCutout } from "@/lib/alpha-cutout";
 import type { Product } from "@/data/catalog";
 
 export function EditProductDialog({
@@ -69,11 +70,20 @@ export function EditProductDialog({
         setBgError("Couldn't remove the background. Try a different image.");
         return;
       }
+      // Models often paint a checkerboard pattern instead of returning real
+      // alpha. Convert any uniform/checkered background into actual
+      // transparency before saving.
+      let cleaned = image;
+      try {
+        cleaned = await applyAlphaCutout(image);
+      } catch (cutoutErr) {
+        console.warn("alpha cutout failed, using raw model output", cutoutErr);
+      }
       // Replace this image in src or gallery, preserving order.
       if (url === product.src) {
-        update(product.id, { src: image });
+        update(product.id, { src: cleaned });
       } else {
-        const gallery = (product.gallery ?? []).map((g) => (g === url ? image : g));
+        const gallery = (product.gallery ?? []).map((g) => (g === url ? cleaned : g));
         update(product.id, { gallery });
       }
     } catch (err) {
