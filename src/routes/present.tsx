@@ -261,7 +261,7 @@ function PresentPage() {
       <style>{`
         @media print {
           @page { size: A4 portrait; margin: 12mm; }
-          html, body { background: white !important; }
+          html, body { background: oklch(0.95 0.012 85) !important; }
           /* Force browsers to print background colors / images / gradients */
           *, *::before, *::after {
             -webkit-print-color-adjust: exact !important;
