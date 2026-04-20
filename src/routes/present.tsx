@@ -27,6 +27,9 @@ export const Route = createFileRoute("/present")({
 function PresentPage() {
   const { ids, paletteId, sceneId, layout } = useSelection();
   const { products: userProducts } = useUserProducts();
+  const [hidden, setHidden] = useState<Record<string, boolean>>({});
+  const togglePage = (id: string) =>
+    setHidden((h) => ({ ...h, [id]: !h[id] }));
 
   const items = useMemo(() => {
     const merged = [...userProducts, ...catalog];
@@ -92,7 +95,7 @@ function PresentPage() {
 
       <div className="mx-auto flex max-w-[900px] flex-col items-center gap-8 px-6 print:max-w-none print:gap-0 print:px-0">
         {/* === PAGE 1 — Furniture Selection === */}
-        <Page>
+        <Page id="furniture" hidden={hidden.furniture} onToggle={togglePage}>
           <PageHeader left="Page 01" center="Furniture Selection" date={today} />
           <div className="mt-6 grid grid-cols-4 gap-x-4 gap-y-6">
             {items.map((p) => (
@@ -118,7 +121,7 @@ function PresentPage() {
         </Page>
 
         {/* === PAGE 2 — Concept Board === */}
-        <Page>
+        <Page id="concept" hidden={hidden.concept} onToggle={togglePage}>
           <PageHeader left="Page 02" center="Concept Board" date={today} />
           <div className="mt-5 flex flex-col gap-5">
             {/* Composition — full width */}
@@ -126,7 +129,12 @@ function PresentPage() {
               <p className="mb-2 text-[9px] uppercase tracking-[0.2em] text-muted-foreground">
                 Your composition
               </p>
-              <div className="overflow-hidden rounded-md">
+              <div
+                className="overflow-hidden rounded-md"
+                style={{
+                  background: `linear-gradient(180deg, ${colorMap[activePalette.colors[1] ?? "linen"]} 0%, ${colorMap[activePalette.colors[0] ?? "cream"]} 55%, ${colorMap[activePalette.colors[3] ?? "jute"]}55 100%)`,
+                }}
+              >
                 <RoomScene
                   items={items}
                   palette={activePalette}
@@ -159,7 +167,10 @@ function PresentPage() {
             </div>
 
             {/* Palette */}
-            <div>
+            <div
+              className="rounded-md p-3"
+              style={{ backgroundColor: "oklch(0.93 0.012 85)" }}
+            >
               <p className="mb-2 text-[9px] uppercase tracking-[0.2em] text-muted-foreground">
                 Palette · {activePalette.name}
               </p>
@@ -167,7 +178,7 @@ function PresentPage() {
                 {activePalette.colors.map((c, i) => (
                   <div key={i} className="flex flex-col items-center">
                     <div
-                      className="h-10 w-10 rounded-full ring-1 ring-ink/10"
+                      className="h-10 w-10 rounded-full ring-1 ring-ink/20 shadow-sm"
                       style={{ backgroundColor: colorMap[c] }}
                     />
                     <span className="mt-1 text-[7px] uppercase tracking-wider text-muted-foreground">
@@ -182,7 +193,7 @@ function PresentPage() {
         </Page>
 
         {/* === PAGE 3 — Shopping List === */}
-        <Page>
+        <Page id="shopping" hidden={hidden.shopping} onToggle={togglePage}>
           <PageHeader left="Page 03" center="Shopping List" date={today} />
           <table className="mt-6 w-full border-collapse text-[10px]">
             <thead>
