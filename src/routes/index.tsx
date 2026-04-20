@@ -1,9 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Menu, Search, Plus, Check, X, ArrowRight } from "lucide-react";
+import { Search, Plus, Check, X, ArrowRight } from "lucide-react";
 import { catalog, categories, type Category, type Product } from "@/data/catalog";
 import { useSelection } from "@/store/selection";
 import { ProductDetail } from "@/components/ProductDetail";
+import { SideMenu } from "@/components/SideMenu";
+import { useUserProducts } from "@/store/user-products";
 
 export const Route = createFileRoute("/")({
   component: CatalogPage,
@@ -26,13 +28,15 @@ export const Route = createFileRoute("/")({
 
 function CatalogPage() {
   const { has, toggle, count, clear } = useSelection();
+  const { products: userProducts } = useUserProducts();
   const [filter, setFilter] = useState<Category | "All">("All");
   const [query, setQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const [active, setActive] = useState<Product | null>(null);
 
   const items = useMemo(() => {
-    return catalog.filter((p) => {
+    const merged = [...userProducts, ...catalog];
+    return merged.filter((p) => {
       const matchCat = filter === "All" || p.category === filter;
       const q = query.trim().toLowerCase();
       const matchQ =
@@ -42,19 +46,14 @@ function CatalogPage() {
         p.category.toLowerCase().includes(q);
       return matchCat && matchQ;
     });
-  }, [filter, query]);
+  }, [filter, query, userProducts]);
 
   return (
     <main className="min-h-screen bg-background pb-32 text-foreground">
       {/* Top bar */}
       <header className="sticky top-0 z-30 border-b border-border/60 bg-background/85 backdrop-blur-md">
         <div className="mx-auto flex max-w-[1500px] items-center justify-between px-6 py-5 md:px-10">
-          <button
-            aria-label="Open menu"
-            className="flex h-10 w-10 items-center justify-center rounded-full text-ink transition-colors hover:bg-secondary"
-          >
-            <Menu strokeWidth={1.4} />
-          </button>
+          <SideMenu />
           <Link to="/" className="font-serif text-2xl tracking-display text-ink md:text-3xl">
             MOODS
           </Link>
