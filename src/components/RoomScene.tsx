@@ -100,7 +100,6 @@ export function RoomScene({ items, palette, scene, onRemove }: Props) {
       {/* WALL: art & mirrors — back wall, upper third */}
       {groups.wall.map((p, i, arr) => {
         const total = arr.length;
-        // distribute evenly across center of wall
         const left = total === 1 ? 50 : 30 + (i * 40) / Math.max(total - 1, 1);
         return (
           <Piece
@@ -109,8 +108,9 @@ export function RoomScene({ items, palette, scene, onRemove }: Props) {
             onRemove={onRemove}
             style={{
               left: `${left}%`,
-              top: "14%",
-              width: "16%",
+              top: "12%",
+              width: "12%",
+              height: "26%",
               transform: "translateX(-50%)",
               zIndex: 10,
             }}
@@ -130,7 +130,8 @@ export function RoomScene({ items, palette, scene, onRemove }: Props) {
             style={{
               left: `${left}%`,
               top: "0%",
-              width: "11%",
+              width: "10%",
+              height: "20%",
               transform: "translateX(-50%)",
               zIndex: 11,
             }}
@@ -138,26 +139,42 @@ export function RoomScene({ items, palette, scene, onRemove }: Props) {
         );
       })}
 
-      {/* FLOOR: rug — large, centered, low */}
+      {/* FLOOR: rug — flat on the floor, squashed via Y-scale to simulate perspective */}
       {groups.floor.map((p) => (
-        <Piece
+        <div
           key={p.id}
-          product={p}
-          onRemove={onRemove}
+          className="group/piece absolute"
           style={{
             left: "50%",
-            bottom: "4%",
-            width: "62%",
+            bottom: "2%",
+            width: "55%",
+            height: "22%",
             transform: "translateX(-50%)",
             zIndex: 20,
           }}
-        />
+        >
+          <img
+            src={p.src}
+            alt={p.name}
+            loading="lazy"
+            className="h-full w-full object-cover object-center drop-shadow-[0_18px_18px_oklch(0.22_0.02_50_/_0.35)]"
+            style={{ transform: "perspective(800px) rotateX(58deg)" }}
+          />
+          {onRemove && (
+            <button
+              onClick={() => onRemove(p.id)}
+              aria-label={`Remove ${p.name}`}
+              className="absolute right-2 top-2 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-background/95 text-[11px] text-ink opacity-0 ring-1 ring-border backdrop-blur transition-opacity hover:bg-rust hover:text-primary-foreground group-hover/piece:opacity-100"
+            >
+              ×
+            </button>
+          )}
+        </div>
       ))}
 
       {/* GROUND: sofa, sideboards, big seating — sit ON the rug */}
       {groups.ground.map((p, i, arr) => {
         const total = arr.length;
-        // primary piece centered, others fan out
         const left =
           total === 1 ? 50 : 28 + (i * 44) / Math.max(total - 1, 1);
         const isPrimary = total === 1 || i === Math.floor(total / 2);
@@ -168,8 +185,9 @@ export function RoomScene({ items, palette, scene, onRemove }: Props) {
             onRemove={onRemove}
             style={{
               left: `${left}%`,
-              bottom: "12%",
-              width: isPrimary ? "38%" : "26%",
+              bottom: "8%",
+              width: isPrimary ? "30%" : "22%",
+              height: isPrimary ? "32%" : "26%",
               transform: "translateX(-50%)",
               zIndex: 30 + i,
             }}
@@ -179,7 +197,6 @@ export function RoomScene({ items, palette, scene, onRemove }: Props) {
 
       {/* STANDING: floor lamps, pampas — taller, sides */}
       {groups.standing.map((p, i) => {
-        // alternate sides
         const side = i % 2 === 0 ? "left" : "right";
         const offset = 6 + Math.floor(i / 2) * 8;
         return (
@@ -189,8 +206,9 @@ export function RoomScene({ items, palette, scene, onRemove }: Props) {
             onRemove={onRemove}
             style={{
               [side]: `${offset}%`,
-              bottom: "10%",
-              width: "13%",
+              bottom: "8%",
+              width: "10%",
+              height: "44%",
               zIndex: 25,
             }}
           />
@@ -200,7 +218,7 @@ export function RoomScene({ items, palette, scene, onRemove }: Props) {
       {/* SURFACE: side tables, ottomans, low tables — flanking sofa */}
       {groups.surface.map((p, i) => {
         const side = i % 2 === 0 ? "left" : "right";
-        const offset = 22 + Math.floor(i / 2) * 6;
+        const offset = 20 + Math.floor(i / 2) * 6;
         return (
           <Piece
             key={p.id}
@@ -208,8 +226,9 @@ export function RoomScene({ items, palette, scene, onRemove }: Props) {
             onRemove={onRemove}
             style={{
               [side]: `${offset}%`,
-              bottom: "10%",
-              width: "15%",
+              bottom: "8%",
+              width: "12%",
+              height: "20%",
               zIndex: 35,
             }}
           />
@@ -219,9 +238,8 @@ export function RoomScene({ items, palette, scene, onRemove }: Props) {
       {/* PROPS: vases, books, candles, pillows — small, scattered on surfaces */}
       {groups.prop.map((p, i, arr) => {
         const total = arr.length;
-        // arrange across the middle band
         const left = 18 + (i * 64) / Math.max(total, 1);
-        const bottoms = ["22%", "18%", "26%", "20%", "24%"];
+        const bottoms = ["20%", "16%", "24%", "18%", "22%"];
         return (
           <Piece
             key={p.id}
@@ -230,7 +248,8 @@ export function RoomScene({ items, palette, scene, onRemove }: Props) {
             style={{
               left: `${left}%`,
               bottom: bottoms[i % bottoms.length],
-              width: "8%",
+              width: "7%",
+              height: "12%",
               zIndex: 40 + i,
             }}
           />
@@ -250,12 +269,12 @@ function Piece({
   onRemove?: (id: string) => void;
 }) {
   return (
-    <div className="group/piece absolute" style={style}>
+    <div className="group/piece absolute flex items-end justify-center" style={style}>
       <img
         src={product.src}
         alt={product.name}
         loading="lazy"
-        className="h-auto w-full object-contain drop-shadow-[0_30px_25px_oklch(0.22_0.02_50_/_0.32)] transition-transform duration-500 group-hover/piece:-translate-y-1 group-hover/piece:scale-[1.04]"
+        className="h-full max-h-full w-full object-contain object-bottom drop-shadow-[0_22px_22px_oklch(0.22_0.02_50_/_0.35)] transition-transform duration-500 group-hover/piece:-translate-y-1 group-hover/piece:scale-[1.04]"
       />
       {onRemove && (
         <button

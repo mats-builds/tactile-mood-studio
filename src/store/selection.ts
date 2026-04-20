@@ -77,6 +77,8 @@ export const selectionStore = {
 export function useSelection() {
   const [, force] = useState(0);
   useEffect(() => {
+    // Re-read after mount so SSR-rendered HTML hydrates with localStorage state.
+    force((n) => n + 1);
     const unsub = selectionStore.subscribe(() => force((n) => n + 1));
     return () => {
       unsub();
