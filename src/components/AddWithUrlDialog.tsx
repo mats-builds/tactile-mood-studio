@@ -52,12 +52,14 @@ export function AddWithUrlDialog({
   const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState<string | null>(null);
   const [draft, setDraft] = useState<Product | null>(null);
+  const [activeImage, setActiveImage] = useState(0);
 
   function reset() {
     setUrl("");
     setStatus("idle");
     setError(null);
     setDraft(null);
+    setActiveImage(0);
   }
 
   async function handleScrape(e: React.FormEvent) {
@@ -92,6 +94,7 @@ export function AddWithUrlDialog({
             : undefined,
       };
       setDraft(product);
+      setActiveImage(0);
       setStatus("preview");
     } catch (err) {
       console.error("scrape failed", err);
@@ -110,6 +113,9 @@ export function AddWithUrlDialog({
     reset();
     onOpenChange(false);
   }
+
+  const previewImages = draft ? [draft.src, ...(draft.gallery ?? [])].filter(Boolean) : [];
+  const currentPreview = previewImages[activeImage] ?? draft?.src ?? "";
 
   return (
     <Dialog
@@ -170,9 +176,9 @@ export function AddWithUrlDialog({
           {status === "preview" && draft && (
             <div className="space-y-4">
               <div className="overflow-hidden rounded-2xl bg-secondary">
-                {draft.src ? (
+                {currentPreview ? (
                   <img
-                    src={draft.src}
+                    src={currentPreview}
                     alt={draft.name}
                     className="h-56 w-full object-contain p-4"
                   />
@@ -182,6 +188,27 @@ export function AddWithUrlDialog({
                   </div>
                 )}
               </div>
+              {previewImages.length > 1 && (
+                <div>
+                  <p className="mb-2 text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                    Product images · {previewImages.length}
+                  </p>
+                  <div className="flex gap-2 overflow-x-auto pb-1">
+                    {previewImages.map((src, i) => (
+                      <button
+                        key={`${src}-${i}`}
+                        type="button"
+                        onClick={() => setActiveImage(i)}
+                        className={`h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-secondary ring-1 transition-all ${
+                          i === activeImage ? "ring-ink" : "ring-border"
+                        }`}
+                      >
+                        <img src={src} alt="" className="h-full w-full object-cover" />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
               <div>
                 <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
                   {draft.category} · {draft.maker}

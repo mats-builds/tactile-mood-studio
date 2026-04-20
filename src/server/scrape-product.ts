@@ -64,6 +64,132 @@ type ScrapedProduct = {
   gallery?: string[];
 };
 
+const IMAGE_URL_RE = /https?:\/\/[^\s"'<>]+?\.(?:png|jpe?g|webp|avif)(?:\?[^\s"'<>]*)?/gi;
+const IMAGE_ATTR_RE =
+  /(?:src|data-src|data-zoom-image|data-image-large-src|href)=["']([^"']+\.(?:png|jpe?g|webp|avif)(?:\?[^"']*)?)["']/gi;
+
+function uniqueStrings(values: Array<string | undefined>) {
+  return Array.from(new Set(values.filter((value): value is string => Boolean(value))));
+}
+
+function scoreImageUrl(url: string) {
+  const lower = url.toLowerCase();
+  let score = 0;
+
+  if (lower.includes("transparent") || lower.includes("packshot") || lower.includes("cutout")) {
+    score += 40;
+  }
+  if (lower.includes("white") || lower.includes("plain")) score += 10;
+  if (lower.includes("large_default")) score += 35;
+  if (lower.includes("default")) score += 16;
+  if (lower.includes("product")) score += 8;
+  if (lower.includes("gallery")) score -= 2;
+  if (lower.includes("/wk/")) score -= 6;
+  if (
+    lower.includes("room") ||
+    lower.includes("lifestyle") ||
+    lower.includes("ambience") ||
+    lower.includes("inspiration")
+  ) {
+    score -= 30;
+  }
+  if (
+    lower.includes("thumb") ||
+    lower.includes("thumbnail") ||
+    lower.includes("icon") ||
+    lower.includes("favicon") ||
+    lower.includes("logo") ||
+    lower.includes("swatch") ||
+    lower.includes("sprite") ||
+    lower.includes("promo")
+  ) {
+    score -= 40;
+  }
+
+  return score;
+}
+
+function extractImageUrlsFromHtml(html: string, pageUrl: string) {
+  const matches = new Set<string>();
+
+  for (const match of html.matchAll(IMAGE_URL_RE)) {
+    matches.add(match[0].replace(/&amp;/g, "&"));
+  }
+
+  for (const match of html.matchAll(IMAGE_ATTR_RE)) {
+    try {
+      matches.add(new URL(match[1].replace(/&amp;/g, "&"), pageUrl).toString());
+    } catch {
+      /* ignore invalid image urls */
+    }
+  }
+
+  return Array.from(matches).filter((url) => scoreImageUrl(url) > -20);
+}
+
+async function fetchPageImages(url: string) {
+  try {
+    const response = await fetch(url, {
+      headers: { "user-agent": "Mozilla/5.0 (compatible; MOODS/1.0)" },
+    });
+    if (!response.ok) return [];
+    const html = await response.text();
+    return extractImageUrlsFromHtml(html, url);
+  } catch {
+    return [];
+  }
+}
+
+async function removeBackground(imageUrl: string) {
+  const apiKey = process.env.LOVABLE_API_KEY;
+  if (!apiKey) return undefined;
+
+  try {
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash-image",
+        messages: [
+          {
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text:
+                  "Remove the entire background and keep only the furniture product centered on a transparent background. Preserve the exact product shape, proportions, material, color, and perspective. Do not stylize or redesign it. Output a clean catalog packshot PNG.",
+              },
+              {
+                type: "image_url",
+                image_url: { url: imageUrl },
+              },
+            ],
+          },
+        ],
+        modalities: ["image", "text"],
+      }),
+    });
+
+    if (!response.ok) return undefined;
+
+    const data = (await response.json()) as {
+      choices?: Array<{
+        message?: {
+          images?: Array<{ image_url?: { url?: string } }>;
+        };
+      }>;
+    };
+
+    const cleaned = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+    return typeof cleaned === "string" ? cleaned : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 export const scrapeProduct = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => inputSchema.parse(input))
   .handler(async ({ data }): Promise<ScrapedProduct> => {
@@ -88,6 +214,23 @@ export const scrapeProduct = createServerFn({ method: "POST" })
       typeof v === "string" ? v : undefined;
     const num = (v: unknown): number | undefined =>
       typeof v === "number" && Number.isFinite(v) ? v : undefined;
+    const firecrawlShowcase = str(json.image_url);
+    const firecrawlGallery = Array.isArray(json.gallery)
+      ? (json.gallery as unknown[]).filter((x): x is string => typeof x === "string")
+      : [];
+    const pageImages = await fetchPageImages(data.url);
+    const allImages = uniqueStrings([...pageImages, firecrawlShowcase, ...firecrawlGallery]).sort(
+      (a, b) => scoreImageUrl(b) - scoreImageUrl(a),
+    );
+    const showcaseImage = allImages[0] ?? firecrawlShowcase;
+    const cleanedShowcase = showcaseImage
+      ? await removeBackground(showcaseImage)
+      : undefined;
+    const gallery = uniqueStrings([
+      ...firecrawlGallery,
+      ...allImages.filter((url) => url !== showcaseImage),
+    ]).slice(0, 8);
+
     return {
       sourceUrl: data.url,
       name: str(json.name),
@@ -99,11 +242,7 @@ export const scrapeProduct = createServerFn({ method: "POST" })
       width_cm: num(json.width_cm),
       height_cm: num(json.height_cm),
       depth_cm: num(json.depth_cm),
-      image_url: str(json.image_url),
-      gallery: Array.isArray(json.gallery)
-        ? (json.gallery as unknown[])
-            .filter((x): x is string => typeof x === "string")
-            .slice(0, 4)
-        : undefined,
+      image_url: cleanedShowcase ?? showcaseImage,
+      gallery: gallery.length > 0 ? gallery : undefined,
     };
   });
