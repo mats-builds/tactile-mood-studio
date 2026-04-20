@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Menu, Plus, Link2, BookOpen, Sparkles, Check, X, ArrowLeft } from "lucide-react";
+import { Menu, Plus, Link2, BookOpen, Sparkles, Pencil, X, ArrowLeft } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -9,13 +9,21 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { AddWithUrlDialog } from "@/components/AddWithUrlDialog";
+import { EditProductDialog } from "@/components/EditProductDialog";
 import { useUserProducts } from "@/store/user-products";
+import type { Product } from "@/data/catalog";
 
 export function SideMenu() {
   const [open, setOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [view, setView] = useState<"menu" | "all">("menu");
+  const [editing, setEditing] = useState<Product | null>(null);
   const { products, remove } = useUserProducts();
+
+  // Keep the editing draft in sync if the underlying product mutates (e.g. image deleted).
+  const liveEditing = editing
+    ? products.find((p) => p.id === editing.id) ?? null
+    : null;
 
   return (
     <>
@@ -39,6 +47,7 @@ export function SideMenu() {
             <AllAdditionsView
               products={products}
               onRemove={remove}
+              onEdit={(p) => setEditing(p)}
               onBack={() => setView("menu")}
             />
           ) : (
@@ -100,7 +109,12 @@ export function SideMenu() {
               </div>
               <ul className="mt-3 space-y-2">
                 {products.slice(0, 3).map((p) => (
-                  <AdditionRow key={p.id} product={p} onRemove={remove} />
+                  <AdditionRow
+                    key={p.id}
+                    product={p}
+                    onRemove={remove}
+                    onEdit={() => setEditing(p)}
+                  />
                 ))}
               </ul>
             </div>
@@ -117,6 +131,13 @@ export function SideMenu() {
       </Sheet>
 
       <AddWithUrlDialog open={addOpen} onOpenChange={setAddOpen} />
+      <EditProductDialog
+        product={liveEditing}
+        open={editing !== null && liveEditing !== null}
+        onOpenChange={(v) => {
+          if (!v) setEditing(null);
+        }}
+      />
     </>
   );
 }
@@ -124,9 +145,11 @@ export function SideMenu() {
 function AdditionRow({
   product,
   onRemove,
+  onEdit,
 }: {
   product: { id: string; name: string; maker: string; src: string };
   onRemove: (id: string) => void;
+  onEdit: () => void;
 }) {
   return (
     <li className="group flex items-center gap-3 rounded-xl bg-secondary/60 p-2">
@@ -142,12 +165,14 @@ function AdditionRow({
         </p>
       </div>
       <div className="flex items-center gap-1 opacity-70 transition-opacity group-hover:opacity-100">
-        <span
-          title="Kept in your catalog"
-          className="flex h-7 w-7 items-center justify-center rounded-full bg-background text-ink"
+        <button
+          type="button"
+          onClick={onEdit}
+          title="Edit"
+          className="flex h-7 w-7 items-center justify-center rounded-full bg-background text-ink transition-colors hover:bg-ink hover:text-background"
         >
-          <Check size={12} />
-        </span>
+          <Pencil size={12} />
+        </button>
         <button
           type="button"
           onClick={() => onRemove(product.id)}
@@ -164,10 +189,12 @@ function AdditionRow({
 function AllAdditionsView({
   products,
   onRemove,
+  onEdit,
   onBack,
 }: {
-  products: { id: string; name: string; maker: string; src: string; price: string }[];
+  products: Product[];
   onRemove: (id: string) => void;
+  onEdit: (p: Product) => void;
   onBack: () => void;
 }) {
   return (
@@ -213,12 +240,12 @@ function AllAdditionsView({
                   )}
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <span
-                    title="Kept in your catalog"
-                    className="inline-flex items-center gap-1 rounded-full bg-background px-2.5 py-1 text-[10px] uppercase tracking-[0.18em] text-ink"
+                  <button
+                    onClick={() => onEdit(p)}
+                    className="inline-flex items-center gap-1 rounded-full bg-background px-2.5 py-1 text-[10px] uppercase tracking-[0.18em] text-ink transition-colors hover:bg-ink hover:text-background"
                   >
-                    <Check size={10} /> Keep
-                  </span>
+                    <Pencil size={10} /> Edit
+                  </button>
                   <button
                     onClick={() => onRemove(p.id)}
                     className="inline-flex items-center gap-1 rounded-full bg-background px-2.5 py-1 text-[10px] uppercase tracking-[0.18em] text-rust transition-colors hover:bg-rust hover:text-primary-foreground"
