@@ -17,6 +17,7 @@ import pampas from "@/assets/pampas.png";
 import ottoman from "@/assets/ottoman.png";
 import shelf from "@/assets/shelf.png";
 import art2 from "@/assets/art2.png";
+import sofaCataline from "@/assets/sofa-cataline.jpg";
 
 export type Category =
   | "Seating"
@@ -78,6 +79,7 @@ export const colorMap: Record<string, string> = {
 
 export const catalog: Product[] = [
   { id: "sofa", name: "Lina Curved Sofa", maker: "Studio Palerma", price: "€ 4,890", category: "Seating", src: sofa, colors: ["rust", "walnut"], role: "ground" },
+  { id: "sofa-cataline", name: "Cataline 3-piece Modular Sofa", maker: "SKLUM", price: "€ 1,099", category: "Seating", src: sofaCataline, colors: ["cream", "linen", "bone"], role: "ground" },
   { id: "armchair", name: "Cane Sling Chair", maker: "Hanssen Workshop", price: "€ 1,680", category: "Seating", src: armchair, colors: ["walnut", "clay"], role: "ground" },
   { id: "loungechair", name: "Bouclé Lounge", maker: "Maison Cru", price: "€ 1,420", category: "Seating", src: loungechair, colors: ["cream", "linen"], role: "ground" },
   { id: "ottoman", name: "Linen Pouf", maker: "Maison Cru", price: "€ 320", category: "Seating", src: ottoman, colors: ["linen", "bone"], role: "surface" },
