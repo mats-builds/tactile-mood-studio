@@ -76,6 +76,8 @@ export type Product = {
   details?: Record<string, string>;
   /** original product page URL */
   sourceUrl?: string;
+  /** real-world dimensions in cm (used to scale the piece on the moodboard) */
+  dims?: { w: number; h: number; d?: number };
 };
 
 /** Color names map to oklch values (used for palette generation) */
