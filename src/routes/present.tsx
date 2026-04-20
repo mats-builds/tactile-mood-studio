@@ -120,8 +120,8 @@ function PresentPage() {
         {/* === PAGE 2 — Concept Board === */}
         <Page>
           <PageHeader left="Page 02" center="Concept Board" date={today} />
-          <div className="mt-5 grid grid-cols-2 gap-4">
-            {/* Left: snapshot of the user's RoomScene */}
+          <div className="mt-5 flex flex-col gap-5">
+            {/* Composition — full width */}
             <div>
               <p className="mb-2 text-[9px] uppercase tracking-[0.2em] text-muted-foreground">
                 Your composition
@@ -136,12 +136,12 @@ function PresentPage() {
               </div>
             </div>
 
-            {/* Right: curated grid + palette */}
-            <div className="flex flex-col">
+            {/* Key pieces — full width */}
+            <div>
               <p className="mb-2 text-[9px] uppercase tracking-[0.2em] text-muted-foreground">
                 Key pieces
               </p>
-              <div className="grid grid-cols-3 gap-2 rounded-md bg-[oklch(0.93_0.012_85)] p-3">
+              <div className="grid grid-cols-6 gap-2 rounded-md bg-[oklch(0.93_0.012_85)] p-3">
                 {items.slice(0, 6).map((p) => (
                   <div
                     key={p.id}
@@ -156,11 +156,14 @@ function PresentPage() {
                   </div>
                 ))}
               </div>
+            </div>
 
-              <p className="mb-2 mt-4 text-[9px] uppercase tracking-[0.2em] text-muted-foreground">
+            {/* Palette */}
+            <div>
+              <p className="mb-2 text-[9px] uppercase tracking-[0.2em] text-muted-foreground">
                 Palette · {activePalette.name}
               </p>
-              <div className="flex gap-2">
+              <div className="flex gap-3">
                 {activePalette.colors.map((c, i) => (
                   <div key={i} className="flex flex-col items-center">
                     <div
