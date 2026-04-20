@@ -149,7 +149,12 @@ function CatalogPage() {
             const selected = has(p.id);
             return (
               <article key={p.id} className="group relative">
-                <div className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-secondary/40">
+                <button
+                  type="button"
+                  onClick={() => setActive(p)}
+                  aria-label={`View ${p.name}`}
+                  className="relative block aspect-[4/5] w-full overflow-hidden rounded-2xl bg-secondary/40 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-ink"
+                >
                   <img
                     src={p.src}
                     alt={p.name}
@@ -157,7 +162,10 @@ function CatalogPage() {
                     className="absolute inset-0 h-full w-full object-contain p-6 transition-transform duration-500 group-hover:scale-[1.04]"
                   />
                   <button
-                    onClick={() => toggle(p.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggle(p.id);
+                    }}
                     aria-pressed={selected}
                     aria-label={selected ? `Remove ${p.name}` : `Add ${p.name}`}
                     className={`absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full ring-1 transition-all ${
@@ -168,8 +176,12 @@ function CatalogPage() {
                   >
                     {selected ? <Check size={16} strokeWidth={2.4} /> : <Plus size={16} />}
                   </button>
-                </div>
-                <div className="mt-4 flex items-start justify-between gap-3">
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActive(p)}
+                  className="mt-4 flex w-full items-start justify-between gap-3 text-left"
+                >
                   <div>
                     <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
                       {p.category} · {p.maker}
@@ -179,7 +191,7 @@ function CatalogPage() {
                     </h3>
                   </div>
                   <p className="shrink-0 font-serif text-base text-ink/80">{p.price}</p>
-                </div>
+                </button>
               </article>
             );
           })}
