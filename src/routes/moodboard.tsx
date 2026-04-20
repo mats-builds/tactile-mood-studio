@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { ArrowLeft, Sparkles, RefreshCw, Plus, Pencil, Check, RotateCcw, ImagePlus } from "lucide-react";
+import { ArrowLeft, Sparkles, RefreshCw, Plus, Pencil, Check, RotateCcw, ImagePlus, FileText } from "lucide-react";
 import {
   catalog,
   colorMap,
@@ -362,6 +362,14 @@ function MoodboardPage() {
           </button>
         </div>
       </section>
+
+      {/* Finish — floating bottom-right */}
+      <button
+        onClick={() => navigate({ to: "/moodboard/present" })}
+        className="fixed bottom-6 right-6 z-40 inline-flex items-center gap-2 rounded-full bg-ink px-6 py-3.5 text-xs uppercase tracking-[0.2em] text-background shadow-lg transition-transform hover:scale-[1.03] hover:bg-rust"
+      >
+        <FileText size={14} /> Finish
+      </button>
     </main>
   );
 }

@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as MoodboardRouteImport } from './routes/moodboard'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as MoodboardPresentRouteImport } from './routes/moodboard.present'
 
 const MoodboardRoute = MoodboardRouteImport.update({
   id: '/moodboard',
@@ -22,31 +23,39 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MoodboardPresentRoute = MoodboardPresentRouteImport.update({
+  id: '/present',
+  path: '/present',
+  getParentRoute: () => MoodboardRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/moodboard': typeof MoodboardRoute
+  '/moodboard': typeof MoodboardRouteWithChildren
+  '/moodboard/present': typeof MoodboardPresentRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/moodboard': typeof MoodboardRoute
+  '/moodboard': typeof MoodboardRouteWithChildren
+  '/moodboard/present': typeof MoodboardPresentRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/moodboard': typeof MoodboardRoute
+  '/moodboard': typeof MoodboardRouteWithChildren
+  '/moodboard/present': typeof MoodboardPresentRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/moodboard'
+  fullPaths: '/' | '/moodboard' | '/moodboard/present'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/moodboard'
-  id: '__root__' | '/' | '/moodboard'
+  to: '/' | '/moodboard' | '/moodboard/present'
+  id: '__root__' | '/' | '/moodboard' | '/moodboard/present'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  MoodboardRoute: typeof MoodboardRoute
+  MoodboardRoute: typeof MoodboardRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -65,12 +74,31 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/moodboard/present': {
+      id: '/moodboard/present'
+      path: '/present'
+      fullPath: '/moodboard/present'
+      preLoaderRoute: typeof MoodboardPresentRouteImport
+      parentRoute: typeof MoodboardRoute
+    }
   }
 }
 
+interface MoodboardRouteChildren {
+  MoodboardPresentRoute: typeof MoodboardPresentRoute
+}
+
+const MoodboardRouteChildren: MoodboardRouteChildren = {
+  MoodboardPresentRoute: MoodboardPresentRoute,
+}
+
+const MoodboardRouteWithChildren = MoodboardRoute._addFileChildren(
+  MoodboardRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  MoodboardRoute: MoodboardRoute,
+  MoodboardRoute: MoodboardRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
