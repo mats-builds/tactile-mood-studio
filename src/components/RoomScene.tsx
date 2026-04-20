@@ -8,10 +8,11 @@ type Props = {
   onRemove?: (id: string) => void;
 };
 
-/** Reference room used to scale pieces. ~5m wide, ~2.8m tall back wall.
- *  These map cm → percentage of the moodboard frame. */
-const ROOM_W_CM = 500;
-const ROOM_H_CM = 280;
+/** Reference room used to scale pieces. Tightened from 500cm → 320cm so the
+ *  same real-world furniture reads larger inside the moodboard frame while
+ *  keeping every piece proportional to every other piece. */
+const ROOM_W_CM = 320;
+const ROOM_H_CM = 200;
 
 /** Convert real-world cm to a width/height % of the moodboard container.
  *  The moodboard is aspect-[16/10]: container width = ROOM_W_CM, container
