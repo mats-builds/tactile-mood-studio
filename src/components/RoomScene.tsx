@@ -100,7 +100,6 @@ export function RoomScene({ items, palette, scene, onRemove }: Props) {
       {/* WALL: art & mirrors — back wall, upper third */}
       {groups.wall.map((p, i, arr) => {
         const total = arr.length;
-        // distribute evenly across center of wall
         const left = total === 1 ? 50 : 30 + (i * 40) / Math.max(total - 1, 1);
         return (
           <Piece
@@ -109,8 +108,9 @@ export function RoomScene({ items, palette, scene, onRemove }: Props) {
             onRemove={onRemove}
             style={{
               left: `${left}%`,
-              top: "14%",
-              width: "16%",
+              top: "12%",
+              width: "12%",
+              height: "26%",
               transform: "translateX(-50%)",
               zIndex: 10,
             }}
@@ -130,7 +130,8 @@ export function RoomScene({ items, palette, scene, onRemove }: Props) {
             style={{
               left: `${left}%`,
               top: "0%",
-              width: "11%",
+              width: "10%",
+              height: "20%",
               transform: "translateX(-50%)",
               zIndex: 11,
             }}
