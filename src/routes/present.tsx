@@ -262,6 +262,12 @@ function PresentPage() {
         @media print {
           @page { size: A4 portrait; margin: 12mm; }
           html, body { background: white !important; }
+          /* Force browsers to print background colors / images / gradients */
+          *, *::before, *::after {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color-adjust: exact !important;
+          }
         }
       `}</style>
     </main>
