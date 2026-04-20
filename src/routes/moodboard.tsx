@@ -15,7 +15,7 @@ import { useUserProducts } from "@/store/user-products";
 import { RoomScene } from "@/components/RoomScene";
 import { MatchFromImageDialog } from "@/components/MatchFromImageDialog";
 import { FullscreenComposer } from "@/components/FullscreenComposer";
-import { LeadCaptureDialog, getStoredLead } from "@/components/LeadCaptureDialog";
+
 
 export const Route = createFileRoute("/moodboard")({
   component: MoodboardPage,
@@ -45,14 +45,9 @@ function MoodboardPage() {
   const [editMode, setEditMode] = useState(false);
   const [matchOpen, setMatchOpen] = useState(false);
   const [fullOpen, setFullOpen] = useState(false);
-  const [leadOpen, setLeadOpen] = useState(false);
 
   const handleFinish = () => {
-    if (getStoredLead()) {
-      navigate({ to: "/present" });
-    } else {
-      setLeadOpen(true);
-    }
+    navigate({ to: "/present" });
   };
 
   const items = useMemo(() => {
@@ -385,14 +380,6 @@ function MoodboardPage() {
       </section>
 
       <FullscreenComposer open={fullOpen} onClose={() => setFullOpen(false)} />
-      <LeadCaptureDialog
-        open={leadOpen}
-        onOpenChange={setLeadOpen}
-        onSubmit={() => {
-          setLeadOpen(false);
-          navigate({ to: "/present" });
-        }}
-      />
     </main>
   );
 }
