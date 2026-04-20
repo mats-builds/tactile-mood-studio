@@ -230,20 +230,26 @@ function PresentPage() {
               ))}
             </tbody>
           </table>
-          <div className="mt-4 flex items-baseline justify-between border-t border-ink/30 pt-3">
+          <div className="mt-4 flex flex-wrap items-baseline justify-between gap-3 border-t border-ink/30 pt-3">
             <p className="text-[9px] italic text-muted-foreground">
               {items.length} {items.length === 1 ? "item" : "items"} · prepared{" "}
               {today}
             </p>
-            <p className="text-[11px] uppercase tracking-[0.2em] text-ink">
-              Total ·{" "}
-              <span className="font-serif text-[16px] not-italic tracking-normal">
-                €{items
+            <p className="flex items-baseline gap-2 text-[10px] uppercase tracking-[0.2em] text-ink">
+              <span>Total</span>
+              <span className="text-[18px] font-medium tracking-normal text-ink">
+                €
+                {items
                   .reduce((sum, p) => {
-                    const n = Number(String(p.price).replace(/[^0-9.,]/g, "").replace(",", "."));
+                    const n = Number(
+                      String(p.price).replace(/[^0-9.,]/g, "").replace(",", "."),
+                    );
                     return sum + (isFinite(n) ? n : 0);
                   }, 0)
-                  .toLocaleString("en-GB", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
+                  .toLocaleString("en-GB", {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 2,
+                  })}
               </span>
             </p>
           </div>
@@ -262,12 +268,44 @@ function PresentPage() {
   );
 }
 
-function Page({ children }: { children: React.ReactNode }) {
+function Page({
+  children,
+  id,
+  hidden,
+  onToggle,
+}: {
+  children: React.ReactNode;
+  id: string;
+  hidden?: boolean;
+  onToggle: (id: string) => void;
+}) {
+  if (hidden) {
+    return (
+      <div className="flex w-full items-center justify-between rounded-md border border-dashed border-ink/30 bg-background/50 px-4 py-3 print:hidden">
+        <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+          Page hidden — won&apos;t be printed
+        </span>
+        <button
+          onClick={() => onToggle(id)}
+          className="text-[10px] uppercase tracking-[0.2em] text-ink underline-offset-2 hover:underline"
+        >
+          Restore
+        </button>
+      </div>
+    );
+  }
   return (
     <section
-      className="relative flex w-full flex-col bg-[oklch(0.95_0.012_85)] p-6 shadow-[var(--shadow-soft)] print:break-after-page print:shadow-none"
+      className="group/page relative flex w-full flex-col bg-[oklch(0.95_0.012_85)] p-6 shadow-[var(--shadow-soft)] print:break-after-page print:shadow-none"
       style={{ aspectRatio: "1 / 1.414" }}
     >
+      <button
+        onClick={() => onToggle(id)}
+        aria-label="Remove this page from the export"
+        className="absolute right-3 top-3 z-20 flex h-7 w-7 items-center justify-center rounded-full bg-background text-ink opacity-0 shadow-sm ring-1 ring-ink/15 transition-opacity hover:bg-rust hover:text-primary-foreground group-hover/page:opacity-100 print:hidden"
+      >
+        <X size={14} />
+      </button>
       {children}
     </section>
   );
