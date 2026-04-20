@@ -17,6 +17,7 @@ import pampas from "@/assets/pampas.png";
 import ottoman from "@/assets/ottoman.png";
 import shelf from "@/assets/shelf.png";
 import art2 from "@/assets/art2.png";
+import sofaCataline from "@/assets/sofa-cataline.jpg";
 
 export type Category =
   | "Seating"
