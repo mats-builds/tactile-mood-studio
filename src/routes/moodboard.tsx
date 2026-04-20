@@ -15,6 +15,7 @@ import { useUserProducts } from "@/store/user-products";
 import { RoomScene } from "@/components/RoomScene";
 import { MatchFromImageDialog } from "@/components/MatchFromImageDialog";
 import { FullscreenComposer } from "@/components/FullscreenComposer";
+import { LeadCaptureDialog, getStoredLead } from "@/components/LeadCaptureDialog";
 
 export const Route = createFileRoute("/moodboard")({
   component: MoodboardPage,
