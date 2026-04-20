@@ -276,11 +276,8 @@ function PageHeader({
       <span className="text-[9px] uppercase tracking-[0.25em] text-muted-foreground">
         {left}
       </span>
-      <h2 className="font-serif text-xl italic text-ink">
-        {center.split(" ").slice(0, -1).join(" ")}{" "}
-        <span className="not-italic font-medium uppercase tracking-wider">
-          {center.split(" ").slice(-1)}
-        </span>
+      <h2 className="text-[11px] font-medium uppercase tracking-[0.3em] text-ink">
+        {center}
       </h2>
       <span className="text-[9px] uppercase tracking-[0.25em] text-muted-foreground">
         {date}
