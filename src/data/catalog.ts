@@ -27,6 +27,24 @@ export type Category =
   | "Textiles"
   | "Art";
 
+/** Decorating role — drives where the piece sits in the composed room.
+ *  floor   = rug, large floor textile (lowest, widest)
+ *  ground  = sofa, sideboard, shelf, big seating placed on the rug/floor
+ *  surface = side table, ottoman, low table (placed near ground furniture)
+ *  hanging = pendant lamp, dropped from ceiling
+ *  standing = floor lamp, pampas — taller than ground, against wall
+ *  wall    = art, mirror — hung on the back wall
+ *  prop    = vase, books, candles, pillows — small props on surfaces
+ */
+export type Role =
+  | "floor"
+  | "ground"
+  | "surface"
+  | "hanging"
+  | "standing"
+  | "wall"
+  | "prop";
+
 export type Product = {
   id: string;
   name: string;
@@ -36,6 +54,8 @@ export type Product = {
   src: string;
   /** dominant color tags used by the AI palette algorithm */
   colors: string[];
+  /** decorating role for room composition */
+  role: Role;
 };
 
 /** Color names map to oklch values (used for palette generation) */
@@ -57,25 +77,45 @@ export const colorMap: Record<string, string> = {
 };
 
 export const catalog: Product[] = [
-  { id: "sofa", name: "Lina Curved Sofa", maker: "Studio Palerma", price: "€ 4,890", category: "Seating", src: sofa, colors: ["rust", "walnut"] },
-  { id: "armchair", name: "Cane Sling Chair", maker: "Hanssen Workshop", price: "€ 1,680", category: "Seating", src: armchair, colors: ["walnut", "clay"] },
-  { id: "loungechair", name: "Bouclé Lounge", maker: "Maison Cru", price: "€ 1,420", category: "Seating", src: loungechair, colors: ["cream", "linen"] },
-  { id: "ottoman", name: "Linen Pouf", maker: "Maison Cru", price: "€ 320", category: "Seating", src: ottoman, colors: ["linen", "bone"] },
-  { id: "table", name: "Oval Travertine Table", maker: "Casa Reni", price: "€ 2,150", category: "Tables", src: table, colors: ["travertine", "bone"] },
-  { id: "sidetable", name: "Stone Side Table", maker: "Casa Reni", price: "€ 690", category: "Tables", src: sidetable, colors: ["travertine", "cream"] },
-  { id: "sideboard", name: "Walnut Sideboard", maker: "Northwood", price: "€ 3,240", category: "Storage", src: sideboard, colors: ["walnut", "rust"] },
-  { id: "shelf", name: "Slim Walnut Shelf", maker: "Northwood", price: "€ 1,980", category: "Storage", src: shelf, colors: ["walnut"] },
-  { id: "lamp", name: "Pleated Floor Lamp", maker: "Brass + Linen Co.", price: "€ 920", category: "Lighting", src: lamp, colors: ["linen", "brass"] },
-  { id: "pendant", name: "Walnut Pendant 02", maker: "Northwood", price: "€ 740", category: "Lighting", src: pendant, colors: ["walnut", "brass"] },
-  { id: "candles", name: "Brass Candle Trio", maker: "Atelier Dion", price: "€ 240", category: "Lighting", src: candles, colors: ["brass", "gold"] },
-  { id: "vase", name: "Onda Vase, Charcoal", maker: "Ceramica Vera", price: "€ 220", category: "Decor", src: vase, colors: ["charcoal", "ink"] },
-  { id: "pampas", name: "Pampas Arrangement", maker: "Ceramica Vera", price: "€ 180", category: "Decor", src: pampas, colors: ["bone", "jute"] },
-  { id: "books", name: "Linen Library, set of 4", maker: "Atelier Dion", price: "€ 140", category: "Decor", src: books, colors: ["cream", "clay"] },
-  { id: "mirror", name: "Halo Brass Mirror", maker: "Atelier Dion", price: "€ 880", category: "Decor", src: mirror, colors: ["brass", "gold"] },
-  { id: "pillows", name: "Linen Cushions, pair", maker: "Maison Cru", price: "€ 180", category: "Textiles", src: pillows, colors: ["linen", "cream"] },
-  { id: "rug", name: "Hand-woven Jute Rug", maker: "Hanssen Workshop", price: "€ 1,260", category: "Textiles", src: rug, colors: ["jute", "cream"] },
-  { id: "art", name: "Figure I, Framed", maker: "Atelier Dion", price: "€ 1,240", category: "Art", src: art, colors: ["bone", "gold", "ink"] },
-  { id: "art2", name: "Earthforms II", maker: "Atelier Dion", price: "€ 680", category: "Art", src: art2, colors: ["terracotta", "cream", "clay"] },
+  { id: "sofa", name: "Lina Curved Sofa", maker: "Studio Palerma", price: "€ 4,890", category: "Seating", src: sofa, colors: ["rust", "walnut"], role: "ground" },
+  { id: "armchair", name: "Cane Sling Chair", maker: "Hanssen Workshop", price: "€ 1,680", category: "Seating", src: armchair, colors: ["walnut", "clay"], role: "ground" },
+  { id: "loungechair", name: "Bouclé Lounge", maker: "Maison Cru", price: "€ 1,420", category: "Seating", src: loungechair, colors: ["cream", "linen"], role: "ground" },
+  { id: "ottoman", name: "Linen Pouf", maker: "Maison Cru", price: "€ 320", category: "Seating", src: ottoman, colors: ["linen", "bone"], role: "surface" },
+  { id: "table", name: "Oval Travertine Table", maker: "Casa Reni", price: "€ 2,150", category: "Tables", src: table, colors: ["travertine", "bone"], role: "surface" },
+  { id: "sidetable", name: "Stone Side Table", maker: "Casa Reni", price: "€ 690", category: "Tables", src: sidetable, colors: ["travertine", "cream"], role: "surface" },
+  { id: "sideboard", name: "Walnut Sideboard", maker: "Northwood", price: "€ 3,240", category: "Storage", src: sideboard, colors: ["walnut", "rust"], role: "ground" },
+  { id: "shelf", name: "Slim Walnut Shelf", maker: "Northwood", price: "€ 1,980", category: "Storage", src: shelf, colors: ["walnut"], role: "ground" },
+  { id: "lamp", name: "Pleated Floor Lamp", maker: "Brass + Linen Co.", price: "€ 920", category: "Lighting", src: lamp, colors: ["linen", "brass"], role: "standing" },
+  { id: "pendant", name: "Walnut Pendant 02", maker: "Northwood", price: "€ 740", category: "Lighting", src: pendant, colors: ["walnut", "brass"], role: "hanging" },
+  { id: "candles", name: "Brass Candle Trio", maker: "Atelier Dion", price: "€ 240", category: "Lighting", src: candles, colors: ["brass", "gold"], role: "prop" },
+  { id: "vase", name: "Onda Vase, Charcoal", maker: "Ceramica Vera", price: "€ 220", category: "Decor", src: vase, colors: ["charcoal", "ink"], role: "prop" },
+  { id: "pampas", name: "Pampas Arrangement", maker: "Ceramica Vera", price: "€ 180", category: "Decor", src: pampas, colors: ["bone", "jute"], role: "standing" },
+  { id: "books", name: "Linen Library, set of 4", maker: "Atelier Dion", price: "€ 140", category: "Decor", src: books, colors: ["cream", "clay"], role: "prop" },
+  { id: "mirror", name: "Halo Brass Mirror", maker: "Atelier Dion", price: "€ 880", category: "Decor", src: mirror, colors: ["brass", "gold"], role: "wall" },
+  { id: "pillows", name: "Linen Cushions, pair", maker: "Maison Cru", price: "€ 180", category: "Textiles", src: pillows, colors: ["linen", "cream"], role: "prop" },
+  { id: "rug", name: "Hand-woven Jute Rug", maker: "Hanssen Workshop", price: "€ 1,260", category: "Textiles", src: rug, colors: ["jute", "cream"], role: "floor" },
+  { id: "art", name: "Figure I, Framed", maker: "Atelier Dion", price: "€ 1,240", category: "Art", src: art, colors: ["bone", "gold", "ink"], role: "wall" },
+  { id: "art2", name: "Earthforms II", maker: "Atelier Dion", price: "€ 680", category: "Art", src: art2, colors: ["terracotta", "cream", "clay"], role: "wall" },
+];
+
+/** Background scene options for the room composer */
+export type Scene = {
+  id: string;
+  name: string;
+  /** "palette" means render the active palette as a gradient */
+  kind: "palette" | "image";
+  src?: string;
+};
+
+import roomLiving from "@/assets/room-living.jpg";
+import roomKitchen from "@/assets/room-kitchen.jpg";
+import roomBedroom from "@/assets/room-bedroom.jpg";
+
+export const scenes: Scene[] = [
+  { id: "palette", name: "Palette", kind: "palette" },
+  { id: "living", name: "Living Room", kind: "image", src: roomLiving },
+  { id: "kitchen", name: "Kitchen", kind: "image", src: roomKitchen },
+  { id: "bedroom", name: "Bedroom", kind: "image", src: roomBedroom },
 ];
 
 export const categories: Category[] = [
