@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Menu, Search, Plus, Check, X, ArrowRight } from "lucide-react";
-import { catalog, categories, type Category } from "@/data/catalog";
+import { catalog, categories, type Category, type Product } from "@/data/catalog";
 import { useSelection } from "@/store/selection";
+import { ProductDetail } from "@/components/ProductDetail";
 
 export const Route = createFileRoute("/")({
   component: CatalogPage,
@@ -28,6 +29,7 @@ function CatalogPage() {
   const [filter, setFilter] = useState<Category | "All">("All");
   const [query, setQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
+  const [active, setActive] = useState<Product | null>(null);
 
   const items = useMemo(() => {
     return catalog.filter((p) => {
