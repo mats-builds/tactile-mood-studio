@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Menu, X, Plus, Link2, BookOpen, Sparkles } from "lucide-react";
+import { Menu, Plus, Link2, BookOpen, Sparkles } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -109,4 +109,3 @@ export function SideMenu() {
   );
 }
 
-export { X }; // (avoid unused import lint)
