@@ -15,6 +15,7 @@ import { useUserProducts } from "@/store/user-products";
 import { RoomScene } from "@/components/RoomScene";
 import { MatchFromImageDialog } from "@/components/MatchFromImageDialog";
 import { FullscreenComposer } from "@/components/FullscreenComposer";
+import { OwnerButton } from "@/components/OwnerButton";
 
 
 export const Route = createFileRoute("/moodboard")({
