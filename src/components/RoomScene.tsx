@@ -220,6 +220,7 @@ type PieceProps = {
   scale: number;
   flipX: boolean;
   zOrder: number;
+  locked: boolean;
   editMode: boolean;
   selected: boolean;
   onSelect: () => void;
