@@ -411,8 +411,10 @@ function BulkImportPage() {
                   key={p.id}
                   className="group overflow-hidden rounded-2xl border border-black/5 bg-white shadow-sm"
                 >
-                  <div
-                    className="relative aspect-square w-full"
+                  <button
+                    type="button"
+                    onClick={() => setDetail(toCatalogProduct(p, p.image_url ?? ""))}
+                    className="relative block aspect-square w-full cursor-zoom-in"
                     style={{
                       background: "#F4F1EA",
                       backgroundImage: p.image_url ? `url(${p.image_url})` : undefined,
@@ -431,7 +433,7 @@ function BulkImportPage() {
                         <Loader2 size={10} className="animate-spin" /> Cutting…
                       </span>
                     )}
-                  </div>
+                  </button>
                   <div className="p-4">
                     <div className="text-[10px] uppercase tracking-[0.18em] text-black/40">
                       {p.maker ?? "—"}
@@ -443,28 +445,36 @@ function BulkImportPage() {
                         {p.price != null ? `${p.currency ?? "EUR"} ${p.price}` : "—"}
                       </span>
                     </div>
-                    <div className="mt-4 flex items-center gap-2">
+                    <div className="mt-4 grid grid-cols-2 gap-2">
                       <button
                         onClick={() => approve(p)}
-                        disabled={cutout || cutting}
-                        className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-[11px] font-medium uppercase tracking-[0.16em] transition-opacity hover:opacity-90 disabled:opacity-40"
+                        disabled={cutting}
+                        className="inline-flex items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-[10px] font-medium uppercase tracking-[0.14em] transition-opacity hover:opacity-90 disabled:opacity-40"
                         style={{ background: "#1A1A1A", color: "#F9F7F2" }}
+                        title="Run background cutout, then save"
                       >
                         {cutting ? (
                           <Loader2 size={11} className="animate-spin" />
                         ) : (
                           <Scissors size={11} />
                         )}
-                        {cutting ? "Saving…" : "Approve & save"}
+                        {cutting ? "Cutting…" : "Cutout & save"}
                       </button>
                       <button
-                        onClick={() => dismiss(p)}
-                        className="inline-flex items-center justify-center rounded-lg border border-black/10 p-2 text-black/50 transition-colors hover:bg-black/5"
-                        title="Dismiss"
+                        onClick={() => saveDirect(p)}
+                        disabled={cutting || !p.image_url}
+                        className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-black/15 px-2 py-2 text-[10px] font-medium uppercase tracking-[0.14em] text-black/80 transition-colors hover:bg-black/5 disabled:opacity-40"
+                        title="Save with original background"
                       >
-                        <X size={12} />
+                        <Plus size={11} /> Save as-is
                       </button>
                     </div>
+                    <button
+                      onClick={() => dismiss(p)}
+                      className="mt-2 inline-flex w-full items-center justify-center gap-1 rounded-lg p-1.5 text-[10px] uppercase tracking-[0.14em] text-black/40 transition-colors hover:bg-black/5"
+                    >
+                      <X size={11} /> Dismiss
+                    </button>
                   </div>
                 </article>
               );
@@ -472,6 +482,20 @@ function BulkImportPage() {
           </div>
         </section>
       )}
+
+      <ProductDetail
+        product={detail}
+        open={!!detail}
+        onOpenChange={(o) => !o && setDetail(null)}
+        selected={false}
+        onToggle={() => {
+          // From the detail overlay "Add to board" triggers a save-as-is.
+          if (!detail) return;
+          const match = products.find((x) => `import-${x.id.slice(0, 8)}` === detail.id);
+          if (match) saveDirect(match);
+          setDetail(null);
+        }}
+      />
     </div>
   );
 }
