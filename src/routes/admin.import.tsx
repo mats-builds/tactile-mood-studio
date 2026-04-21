@@ -273,6 +273,7 @@ function BulkImportPage() {
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
             {products.map((p) => {
               const cutout = p.image_url?.startsWith("data:");
+              const cutting = cuttingIds.has(p.id);
               return (
                 <article
                   key={p.id}
@@ -288,9 +289,14 @@ function BulkImportPage() {
                       backgroundRepeat: "no-repeat",
                     }}
                   >
-                    {!cutout && p.image_url && (
-                      <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full bg-white/85 px-2 py-0.5 text-[10px] uppercase tracking-[0.18em] text-black/70">
-                        <Loader2 size={10} className="animate-spin" /> Cutout…
+                    {cutout && (
+                      <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full bg-emerald-600/90 px-2 py-0.5 text-[10px] uppercase tracking-[0.18em] text-white">
+                        <CheckCircle2 size={10} /> Cutout
+                      </span>
+                    )}
+                    {cutting && (
+                      <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full bg-white/90 px-2 py-0.5 text-[10px] uppercase tracking-[0.18em] text-black/70">
+                        <Loader2 size={10} className="animate-spin" /> Cutting…
                       </span>
                     )}
                   </div>
@@ -304,6 +310,28 @@ function BulkImportPage() {
                       <span className="font-mono">
                         {p.price != null ? `${p.currency ?? "EUR"} ${p.price}` : "—"}
                       </span>
+                    </div>
+                    <div className="mt-4 flex items-center gap-2">
+                      <button
+                        onClick={() => runCutout(p)}
+                        disabled={cutout || cutting}
+                        className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-[11px] font-medium uppercase tracking-[0.16em] transition-opacity hover:opacity-90 disabled:opacity-40"
+                        style={{ background: "#1A1A1A", color: "#F9F7F2" }}
+                      >
+                        {cutting ? (
+                          <Loader2 size={11} className="animate-spin" />
+                        ) : (
+                          <Scissors size={11} />
+                        )}
+                        {cutout ? "Approved" : "Cutout & keep"}
+                      </button>
+                      <button
+                        onClick={() => dismiss(p)}
+                        className="inline-flex items-center justify-center rounded-lg border border-black/10 p-2 text-black/50 transition-colors hover:bg-black/5"
+                        title="Dismiss"
+                      >
+                        <X size={12} />
+                      </button>
                     </div>
                   </div>
                 </article>
