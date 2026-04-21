@@ -14,7 +14,105 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      import_jobs: {
+        Row: {
+          category_url: string
+          created_at: string
+          current_label: string | null
+          error_message: string | null
+          failed: number
+          id: string
+          max_items: number
+          processed: number
+          status: string
+          succeeded: number
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          category_url: string
+          created_at?: string
+          current_label?: string | null
+          error_message?: string | null
+          failed?: number
+          id?: string
+          max_items?: number
+          processed?: number
+          status?: string
+          succeeded?: number
+          total?: number
+          updated_at?: string
+        }
+        Update: {
+          category_url?: string
+          created_at?: string
+          current_label?: string | null
+          error_message?: string | null
+          failed?: number
+          id?: string
+          max_items?: number
+          processed?: number
+          status?: string
+          succeeded?: number
+          total?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      products: {
+        Row: {
+          category: string | null
+          created_at: string
+          currency: string | null
+          description: string | null
+          id: string
+          image_url: string | null
+          job_id: string | null
+          maker: string | null
+          name: string
+          original_image_url: string | null
+          price: number | null
+          source_url: string
+          specs: Json | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          currency?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          job_id?: string | null
+          maker?: string | null
+          name: string
+          original_image_url?: string | null
+          price?: number | null
+          source_url: string
+          specs?: Json | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          currency?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          job_id?: string | null
+          maker?: string | null
+          name?: string
+          original_image_url?: string | null
+          price?: number | null
+          source_url?: string
+          specs?: Json | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
