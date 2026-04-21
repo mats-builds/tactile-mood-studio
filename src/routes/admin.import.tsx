@@ -45,6 +45,7 @@ function BulkImportPage() {
   const [job, setJob] = useState<Job | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const cutoutRunning = useRef<Set<string>>(new Set());
+  const [cuttingIds, setCuttingIds] = useState<Set<string>>(new Set());
 
   // Subscribe to current job + its products
   useEffect(() => {
@@ -94,24 +95,35 @@ function BulkImportPage() {
     };
   }, [job?.id]);
 
-  // Run client-side background removal on each new product image, then update the row.
-  useEffect(() => {
-    products.forEach(async (p) => {
-      if (!p.image_url) return;
-      if (p.image_url.startsWith("data:")) return; // already cutout
-      if (cutoutRunning.current.has(p.id)) return;
-      cutoutRunning.current.add(p.id);
-      try {
-        const dataUrl = await applyAlphaCutout(p.image_url);
-        await supabase.from("products").update({ image_url: dataUrl }).eq("id", p.id);
-      } catch (e) {
-        console.error("cutout failed for", p.id, e);
-      } finally {
-        cutoutRunning.current.delete(p.id);
-      }
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [products.map((p) => p.id + (p.image_url?.startsWith("data:") ? "1" : "0")).join(",")]);
+  // Background removal is now triggered manually per product via the
+  // "Cutout & approve" button so the user can first review which items to keep.
+  const runCutout = async (p: Product) => {
+    if (!p.image_url || p.image_url.startsWith("data:")) return;
+    if (cutoutRunning.current.has(p.id)) return;
+    cutoutRunning.current.add(p.id);
+    setCuttingIds((s) => new Set(s).add(p.id));
+    try {
+      const dataUrl = await applyAlphaCutout(p.image_url);
+      await supabase
+        .from("products")
+        .update({ image_url: dataUrl, status: "approved" })
+        .eq("id", p.id);
+    } catch (e) {
+      console.error("cutout failed for", p.id, e);
+    } finally {
+      cutoutRunning.current.delete(p.id);
+      setCuttingIds((s) => {
+        const n = new Set(s);
+        n.delete(p.id);
+        return n;
+      });
+    }
+  };
+
+  const dismiss = async (p: Product) => {
+    setProducts((prev) => prev.filter((x) => x.id !== p.id));
+    await supabase.from("products").update({ status: "rejected" }).eq("id", p.id);
+  };
 
   const startSync = async () => {
     setErrorText(null);
