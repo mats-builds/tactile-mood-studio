@@ -248,8 +248,16 @@ async function runJob(jobId: string, categoryUrl: string, limit: number) {
       try {
         const { markdown, html, metadata } = await firecrawlScrape(url);
         const heroImage = pickHeroImage(html, metadata);
+        // Cheap pre-filter: require a currency-like price token on the page.
+        // Avoids burning AI calls on showcase / inspiration pages with no price.
+        const priceRegex = /(?:€|\bEUR\b|\$|\bUSD\b|\bGBP\b|£)\s?\d[\d.,]*|\d[\d.,]*\s?(?:€|\bEUR\b|\$|\bUSD\b|\bGBP\b|£)/i;
+        if (!priceRegex.test(markdown)) {
+          failed++;
+          await updateJob(jobId, { processed: i + 1, succeeded, failed });
+          continue;
+        }
         const extracted = await extractWithAI({ url, markdown, heroImage });
-        if (!extracted || !extracted.name) {
+        if (!extracted || !extracted.name || extracted.price == null || Number.isNaN(Number(extracted.price))) {
           failed++;
           continue;
         }
