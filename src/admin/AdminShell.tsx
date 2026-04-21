@@ -3,11 +3,18 @@ import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { BarChart3, Users, Package, LogOut, Sparkles } from "lucide-react";
 import { isAdminAuthed, logout, tryLogin } from "./auth";
 
-const nav = [
+type NavItem = {
+  to: string;
+  label: string;
+  icon: typeof BarChart3;
+  exact?: boolean;
+};
+
+const nav: NavItem[] = [
   { to: "/admin", label: "Overview", icon: BarChart3, exact: true },
   { to: "/admin/leads", label: "Lead Feed", icon: Users },
   { to: "/admin/catalog", label: "Catalog", icon: Package },
-] as const;
+];
 
 export function AdminShell({ children }: { children: ReactNode }) {
   const [authed, setAuthed] = useState(false);
@@ -51,7 +58,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
             return (
               <Link
                 key={n.to}
-                to={n.to}
+                to={n.to as string}
                 className="group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all"
                 style={{
                   background: active ? "#1A1A1A" : "transparent",
@@ -99,7 +106,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
             return (
               <Link
                 key={n.to}
-                to={n.to}
+                to={n.to as string}
                 className="rounded-lg p-2"
                 style={{
                   background: active ? "#1A1A1A" : "transparent",
