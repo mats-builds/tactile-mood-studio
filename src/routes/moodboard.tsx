@@ -107,6 +107,7 @@ function MoodboardPage() {
             onMatched={() => setEditMode(true)}
           />
         </div>
+        <OwnerButton />
       </main>
     );
   }
