@@ -40,7 +40,7 @@ async function firecrawlMap(url: string, limit: number): Promise<string[]> {
     },
     body: JSON.stringify({
       url,
-      limit: Math.max(limit * 4, 50),
+      limit: Math.max(limit * 10, 200),
       includeSubdomains: false,
     }),
   });
@@ -49,19 +49,62 @@ async function firecrawlMap(url: string, limit: number): Promise<string[]> {
     throw new Error(`Firecrawl map failed [${res.status}]: ${t}`);
   }
   const data = await res.json();
-  const links: string[] = data?.links ?? data?.data?.links ?? [];
-  // Heuristic: keep links that look like product detail pages.
-  const productLike = links.filter((u) => {
-    if (typeof u !== "string") return false;
+  // Firecrawl v2 may return links as strings or as { url, title, description } objects.
+  const rawLinks: unknown[] =
+    data?.links ?? data?.data?.links ?? data?.data ?? [];
+  const links: string[] = rawLinks
+    .map((l) => (typeof l === "string" ? l : (l as { url?: string })?.url))
+    .filter((u): u is string => typeof u === "string");
+
+  // Normalize the source URL so we can compare paths.
+  let sourceUrl: URL | null = null;
+  try {
+    sourceUrl = new URL(url);
+  } catch {
+    /* ignore */
+  }
+  const sourcePath = sourceUrl?.pathname.replace(/\/+$/, "") ?? "";
+  const sourceSegments = sourcePath.split("/").filter(Boolean);
+
+  // Filter out obvious non-product URLs, then prefer links that go DEEPER
+  // than the category page itself (a product detail page lives below the
+  // category in the URL tree on most ecommerce sites).
+  const candidates = links.filter((u) => {
     if (u === url) return false;
-    const lower = u.toLowerCase();
-    if (/\.(jpg|jpeg|png|webp|pdf|zip|css|js)(\?|$)/.test(lower)) return false;
-    return /\/(product|products|shop|item|p)\//.test(lower) ||
-      /-p-?\d+/.test(lower) ||
-      lower.split("/").filter(Boolean).length >= 3;
+    let parsed: URL;
+    try {
+      parsed = new URL(u);
+    } catch {
+      return false;
+    }
+    if (sourceUrl && parsed.hostname !== sourceUrl.hostname) return false;
+    const lower = parsed.pathname.toLowerCase();
+    if (/\.(jpg|jpeg|png|webp|gif|svg|pdf|zip|css|js|xml|ico)(\?|$)/.test(lower)) return false;
+    // Skip common non-product sections.
+    if (/\/(cart|checkout|account|login|register|wishlist|search|contact|about|blog|news|faq|service|customer|terms|privacy|policy|sitemap|inspiratie|merken?|brands?|stores?|winkels?)(\/|$)/.test(lower)) return false;
+    return true;
   });
-  // de-dupe
-  return Array.from(new Set(productLike)).slice(0, limit);
+
+  // Prefer URLs that live UNDER the category path and have at least one
+  // additional segment (the product slug).
+  const deeper = candidates.filter((u) => {
+    try {
+      const p = new URL(u).pathname.replace(/\/+$/, "");
+      const segs = p.split("/").filter(Boolean);
+      if (sourceSegments.length > 0) {
+        const startsWithSource = sourceSegments.every(
+          (s, i) => segs[i]?.toLowerCase() === s.toLowerCase(),
+        );
+        return startsWithSource && segs.length > sourceSegments.length;
+      }
+      return segs.length >= 2;
+    } catch {
+      return false;
+    }
+  });
+
+  const chosen = deeper.length > 0 ? deeper : candidates;
+  return Array.from(new Set(chosen)).slice(0, limit);
 }
 
 async function firecrawlScrape(url: string): Promise<{ markdown: string; html: string; metadata: Record<string, unknown> }> {
