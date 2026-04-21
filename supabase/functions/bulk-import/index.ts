@@ -162,7 +162,7 @@ async function extractWithAI(args: {
         {
           role: "system",
           content:
-            "You extract structured furniture product information from scraped product pages. Return only the fields you can confidently determine. Use EUR if the page shows €.",
+            "You extract structured furniture product information from scraped product pages. ONLY return data if this is an actual buyable product page with a clear price. If the page is a showcase, project, inspiration, category listing, or has no price, do NOT call the function. Use EUR if the page shows €.",
         },
         {
           role: "user",
@@ -194,7 +194,7 @@ async function extractWithAI(args: {
                   additionalProperties: { type: "string" },
                 },
               },
-              required: ["name"],
+              required: ["name", "price"],
               additionalProperties: false,
             },
           },
