@@ -239,6 +239,7 @@ function CatalogPage() {
         selected={active ? has(active.id) : false}
         onToggle={toggle}
       />
+      <OwnerButton />
     </main>
   );
 }
