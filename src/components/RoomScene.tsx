@@ -195,6 +195,7 @@ export function RoomScene({
             scale={scale}
             flipX={override.flipX ?? false}
             zOrder={override.z ?? 0}
+            locked={override.locked ?? false}
             editMode={editMode}
             selected={selectedId === item.id}
             onSelect={() => setSelectedId(item.id)}
@@ -219,6 +220,7 @@ type PieceProps = {
   scale: number;
   flipX: boolean;
   zOrder: number;
+  locked: boolean;
   editMode: boolean;
   selected: boolean;
   onSelect: () => void;
@@ -238,6 +240,7 @@ function Piece({
   scale,
   flipX,
   zOrder,
+  locked,
   editMode,
   selected,
   onSelect,
@@ -267,7 +270,7 @@ function Piece({
   }, [scale, resizing]);
 
   const startDrag = (e: React.PointerEvent) => {
-    if (!editMode || !containerRef.current) return;
+    if (!editMode || !containerRef.current || locked) return;
     // First click selects; subsequent drags move.
     if (!selected) {
       e.stopPropagation();
@@ -341,7 +344,7 @@ function Piece({
   return (
     <div
       className={`group/piece absolute inline-flex items-end justify-center ${
-        editMode ? (selected ? "cursor-move" : "cursor-pointer") : ""
+        editMode ? (locked ? "cursor-default" : selected ? "cursor-move" : "cursor-pointer") : ""
       } ${dragging || resizing ? "z-50" : ""}`}
       style={{
         left: `${localX}%`,
@@ -350,8 +353,14 @@ function Piece({
         height: `${liveHeight}%`,
         transform: "translate(-50%, -100%)",
         zIndex:
-          dragging || resizing ? 1000 : selected ? 500 + zOrder : 10 + zOrder,
-        touchAction: editMode ? "none" : undefined,
+          dragging || resizing
+            ? 1000
+            : locked
+              ? 1
+              : selected
+                ? 500 + zOrder
+                : 10 + zOrder,
+        touchAction: editMode && !locked ? "none" : undefined,
       }}
       onPointerDown={editMode ? startDrag : undefined}
     >
@@ -362,7 +371,7 @@ function Piece({
         draggable={false}
         className={`h-full w-auto max-w-none object-contain object-bottom drop-shadow-[0_22px_22px_oklch(0.22_0.02_50_/_0.35)] transition-transform duration-300 ${
           !editMode ? "group-hover/piece:-translate-y-1 group-hover/piece:scale-[1.04]" : ""
-        } ${isFloor ? "" : ""}`}
+        } ${editMode && locked ? "opacity-90" : ""}`}
         style={
           isFloor
             ? {
@@ -419,7 +428,34 @@ function Piece({
           >
             ▼
           </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onLayoutChange?.(product.id, { locked: true });
+            }}
+            title="Lock in place (sends behind)"
+            aria-label={`Lock ${product.name}`}
+            className="flex h-6 w-6 items-center justify-center rounded-sm text-[12px] text-ink hover:bg-muted"
+          >
+            🔒
+          </button>
         </div>
+      )}
+
+      {/* locked indicator + unlock affordance (always shown in edit mode) */}
+      {editMode && locked && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onLayoutChange?.(product.id, { locked: false });
+          }}
+          onPointerDown={(e) => e.stopPropagation()}
+          title={`Unlock ${product.name}`}
+          aria-label={`Unlock ${product.name}`}
+          className="absolute -top-2 -right-2 z-20 flex h-6 w-6 items-center justify-center rounded-full bg-ink/90 text-[11px] text-background shadow ring-1 ring-background hover:bg-ink"
+        >
+          🔒
+        </button>
       )}
 
       {/* resize handle (bottom-right) */}

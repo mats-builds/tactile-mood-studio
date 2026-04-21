@@ -15,6 +15,8 @@ export type LayoutOverride = {
   flipX?: boolean;
   /** stacking order; higher renders in front. Default 0. */
   z?: number;
+  /** locked in place: not draggable/selectable, rendered behind unlocked items */
+  locked?: boolean;
 };
 
 export type LayoutMap = Record<string, LayoutOverride>;
