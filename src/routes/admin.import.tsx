@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Download, Loader2, Sparkles, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Download, Loader2, Sparkles, AlertCircle, CheckCircle2, Scissors, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { applyAlphaCutout } from "@/lib/alpha-cutout";
 
