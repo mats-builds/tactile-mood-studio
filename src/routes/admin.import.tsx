@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Download, Loader2, Sparkles, AlertCircle, CheckCircle2, Scissors, X } from "lucide-react";
+import { Download, Loader2, Sparkles, AlertCircle, CheckCircle2, Scissors, X, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { applyAlphaCutout } from "@/lib/alpha-cutout";
 import { userProductsStore } from "@/store/user-products";
 import type { Category, Product as CatalogProduct, Role } from "@/data/catalog";
+import { ProductDetail } from "@/components/ProductDetail";
 
 export const Route = createFileRoute("/admin/import")({
   component: BulkImportPage,
