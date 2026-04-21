@@ -15,6 +15,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminLeadsRouteImport } from './routes/admin.leads'
+import { Route as AdminImportRouteImport } from './routes/admin.import'
 import { Route as AdminCatalogRouteImport } from './routes/admin.catalog'
 
 const PresentRoute = PresentRouteImport.update({
@@ -47,6 +48,11 @@ const AdminLeadsRoute = AdminLeadsRouteImport.update({
   path: '/leads',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminImportRoute = AdminImportRouteImport.update({
+  id: '/import',
+  path: '/import',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminCatalogRoute = AdminCatalogRouteImport.update({
   id: '/catalog',
   path: '/catalog',
@@ -59,6 +65,7 @@ export interface FileRoutesByFullPath {
   '/moodboard': typeof MoodboardRoute
   '/present': typeof PresentRoute
   '/admin/catalog': typeof AdminCatalogRoute
+  '/admin/import': typeof AdminImportRoute
   '/admin/leads': typeof AdminLeadsRoute
   '/admin/': typeof AdminIndexRoute
 }
@@ -67,6 +74,7 @@ export interface FileRoutesByTo {
   '/moodboard': typeof MoodboardRoute
   '/present': typeof PresentRoute
   '/admin/catalog': typeof AdminCatalogRoute
+  '/admin/import': typeof AdminImportRoute
   '/admin/leads': typeof AdminLeadsRoute
   '/admin': typeof AdminIndexRoute
 }
@@ -77,6 +85,7 @@ export interface FileRoutesById {
   '/moodboard': typeof MoodboardRoute
   '/present': typeof PresentRoute
   '/admin/catalog': typeof AdminCatalogRoute
+  '/admin/import': typeof AdminImportRoute
   '/admin/leads': typeof AdminLeadsRoute
   '/admin/': typeof AdminIndexRoute
 }
@@ -88,6 +97,7 @@ export interface FileRouteTypes {
     | '/moodboard'
     | '/present'
     | '/admin/catalog'
+    | '/admin/import'
     | '/admin/leads'
     | '/admin/'
   fileRoutesByTo: FileRoutesByTo
@@ -96,6 +106,7 @@ export interface FileRouteTypes {
     | '/moodboard'
     | '/present'
     | '/admin/catalog'
+    | '/admin/import'
     | '/admin/leads'
     | '/admin'
   id:
@@ -105,6 +116,7 @@ export interface FileRouteTypes {
     | '/moodboard'
     | '/present'
     | '/admin/catalog'
+    | '/admin/import'
     | '/admin/leads'
     | '/admin/'
   fileRoutesById: FileRoutesById
@@ -160,6 +172,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminLeadsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/import': {
+      id: '/admin/import'
+      path: '/import'
+      fullPath: '/admin/import'
+      preLoaderRoute: typeof AdminImportRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/catalog': {
       id: '/admin/catalog'
       path: '/catalog'
@@ -172,12 +191,14 @@ declare module '@tanstack/react-router' {
 
 interface AdminRouteChildren {
   AdminCatalogRoute: typeof AdminCatalogRoute
+  AdminImportRoute: typeof AdminImportRoute
   AdminLeadsRoute: typeof AdminLeadsRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminCatalogRoute: AdminCatalogRoute,
+  AdminImportRoute: AdminImportRoute,
   AdminLeadsRoute: AdminLeadsRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
