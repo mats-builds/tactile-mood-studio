@@ -240,6 +240,7 @@ function Piece({
   scale,
   flipX,
   zOrder,
+  locked,
   editMode,
   selected,
   onSelect,
