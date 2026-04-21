@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as PresentRouteImport } from './routes/present'
 import { Route as MoodboardRouteImport } from './routes/moodboard'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 
 const PresentRoute = PresentRouteImport.update({
@@ -23,6 +24,11 @@ const MoodboardRoute = MoodboardRouteImport.update({
   path: '/moodboard',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -31,30 +37,34 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/moodboard': typeof MoodboardRoute
   '/present': typeof PresentRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/moodboard': typeof MoodboardRoute
   '/present': typeof PresentRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/moodboard': typeof MoodboardRoute
   '/present': typeof PresentRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/moodboard' | '/present'
+  fullPaths: '/' | '/admin' | '/moodboard' | '/present'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/moodboard' | '/present'
-  id: '__root__' | '/' | '/moodboard' | '/present'
+  to: '/' | '/admin' | '/moodboard' | '/present'
+  id: '__root__' | '/' | '/admin' | '/moodboard' | '/present'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRoute
   MoodboardRoute: typeof MoodboardRoute
   PresentRoute: typeof PresentRoute
 }
@@ -75,6 +85,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MoodboardRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -87,6 +104,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRoute,
   MoodboardRoute: MoodboardRoute,
   PresentRoute: PresentRoute,
 }
