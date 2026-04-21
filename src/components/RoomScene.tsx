@@ -361,7 +361,6 @@ function Piece({
                 ? 500 + zOrder
                 : 10 + zOrder,
         touchAction: editMode && !locked ? "none" : undefined,
-        pointerEvents: editMode && locked ? "none" : undefined,
       }}
       onPointerDown={editMode ? startDrag : undefined}
     >
