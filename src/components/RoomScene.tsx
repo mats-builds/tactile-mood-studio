@@ -371,7 +371,7 @@ function Piece({
         draggable={false}
         className={`h-full w-auto max-w-none object-contain object-bottom drop-shadow-[0_22px_22px_oklch(0.22_0.02_50_/_0.35)] transition-transform duration-300 ${
           !editMode ? "group-hover/piece:-translate-y-1 group-hover/piece:scale-[1.04]" : ""
-        } ${isFloor ? "" : ""}`}
+        } ${editMode && locked ? "opacity-90" : ""}`}
         style={
           isFloor
             ? {
