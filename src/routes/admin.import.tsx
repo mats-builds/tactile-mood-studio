@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Download, Loader2, Sparkles, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Download, Loader2, Sparkles, AlertCircle, CheckCircle2, Scissors, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { applyAlphaCutout } from "@/lib/alpha-cutout";
 
@@ -45,6 +45,7 @@ function BulkImportPage() {
   const [job, setJob] = useState<Job | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const cutoutRunning = useRef<Set<string>>(new Set());
+  const [cuttingIds, setCuttingIds] = useState<Set<string>>(new Set());
 
   // Subscribe to current job + its products
   useEffect(() => {
@@ -94,24 +95,35 @@ function BulkImportPage() {
     };
   }, [job?.id]);
 
-  // Run client-side background removal on each new product image, then update the row.
-  useEffect(() => {
-    products.forEach(async (p) => {
-      if (!p.image_url) return;
-      if (p.image_url.startsWith("data:")) return; // already cutout
-      if (cutoutRunning.current.has(p.id)) return;
-      cutoutRunning.current.add(p.id);
-      try {
-        const dataUrl = await applyAlphaCutout(p.image_url);
-        await supabase.from("products").update({ image_url: dataUrl }).eq("id", p.id);
-      } catch (e) {
-        console.error("cutout failed for", p.id, e);
-      } finally {
-        cutoutRunning.current.delete(p.id);
-      }
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [products.map((p) => p.id + (p.image_url?.startsWith("data:") ? "1" : "0")).join(",")]);
+  // Background removal is now triggered manually per product via the
+  // "Cutout & approve" button so the user can first review which items to keep.
+  const runCutout = async (p: Product) => {
+    if (!p.image_url || p.image_url.startsWith("data:")) return;
+    if (cutoutRunning.current.has(p.id)) return;
+    cutoutRunning.current.add(p.id);
+    setCuttingIds((s) => new Set(s).add(p.id));
+    try {
+      const dataUrl = await applyAlphaCutout(p.image_url);
+      await supabase
+        .from("products")
+        .update({ image_url: dataUrl, status: "approved" })
+        .eq("id", p.id);
+    } catch (e) {
+      console.error("cutout failed for", p.id, e);
+    } finally {
+      cutoutRunning.current.delete(p.id);
+      setCuttingIds((s) => {
+        const n = new Set(s);
+        n.delete(p.id);
+        return n;
+      });
+    }
+  };
+
+  const dismiss = async (p: Product) => {
+    setProducts((prev) => prev.filter((x) => x.id !== p.id));
+    await supabase.from("products").update({ status: "rejected" }).eq("id", p.id);
+  };
 
   const startSync = async () => {
     setErrorText(null);
@@ -261,6 +273,7 @@ function BulkImportPage() {
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
             {products.map((p) => {
               const cutout = p.image_url?.startsWith("data:");
+              const cutting = cuttingIds.has(p.id);
               return (
                 <article
                   key={p.id}
@@ -276,9 +289,14 @@ function BulkImportPage() {
                       backgroundRepeat: "no-repeat",
                     }}
                   >
-                    {!cutout && p.image_url && (
-                      <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full bg-white/85 px-2 py-0.5 text-[10px] uppercase tracking-[0.18em] text-black/70">
-                        <Loader2 size={10} className="animate-spin" /> Cutout…
+                    {cutout && (
+                      <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full bg-emerald-600/90 px-2 py-0.5 text-[10px] uppercase tracking-[0.18em] text-white">
+                        <CheckCircle2 size={10} /> Cutout
+                      </span>
+                    )}
+                    {cutting && (
+                      <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full bg-white/90 px-2 py-0.5 text-[10px] uppercase tracking-[0.18em] text-black/70">
+                        <Loader2 size={10} className="animate-spin" /> Cutting…
                       </span>
                     )}
                   </div>
@@ -292,6 +310,28 @@ function BulkImportPage() {
                       <span className="font-mono">
                         {p.price != null ? `${p.currency ?? "EUR"} ${p.price}` : "—"}
                       </span>
+                    </div>
+                    <div className="mt-4 flex items-center gap-2">
+                      <button
+                        onClick={() => runCutout(p)}
+                        disabled={cutout || cutting}
+                        className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-[11px] font-medium uppercase tracking-[0.16em] transition-opacity hover:opacity-90 disabled:opacity-40"
+                        style={{ background: "#1A1A1A", color: "#F9F7F2" }}
+                      >
+                        {cutting ? (
+                          <Loader2 size={11} className="animate-spin" />
+                        ) : (
+                          <Scissors size={11} />
+                        )}
+                        {cutout ? "Approved" : "Cutout & keep"}
+                      </button>
+                      <button
+                        onClick={() => dismiss(p)}
+                        className="inline-flex items-center justify-center rounded-lg border border-black/10 p-2 text-black/50 transition-colors hover:bg-black/5"
+                        title="Dismiss"
+                      >
+                        <X size={12} />
+                      </button>
                     </div>
                   </div>
                 </article>
