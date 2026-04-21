@@ -344,7 +344,7 @@ function Piece({
   return (
     <div
       className={`group/piece absolute inline-flex items-end justify-center ${
-        editMode ? (selected ? "cursor-move" : "cursor-pointer") : ""
+        editMode ? (locked ? "cursor-default" : selected ? "cursor-move" : "cursor-pointer") : ""
       } ${dragging || resizing ? "z-50" : ""}`}
       style={{
         left: `${localX}%`,
@@ -353,8 +353,15 @@ function Piece({
         height: `${liveHeight}%`,
         transform: "translate(-50%, -100%)",
         zIndex:
-          dragging || resizing ? 1000 : selected ? 500 + zOrder : 10 + zOrder,
-        touchAction: editMode ? "none" : undefined,
+          dragging || resizing
+            ? 1000
+            : locked
+              ? 1
+              : selected
+                ? 500 + zOrder
+                : 10 + zOrder,
+        touchAction: editMode && !locked ? "none" : undefined,
+        pointerEvents: editMode && locked ? "none" : undefined,
       }}
       onPointerDown={editMode ? startDrag : undefined}
     >
