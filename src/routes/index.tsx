@@ -6,6 +6,7 @@ import { useSelection } from "@/store/selection";
 import { ProductDetail } from "@/components/ProductDetail";
 import { SideMenu } from "@/components/SideMenu";
 import { useUserProducts } from "@/store/user-products";
+import { OwnerButton } from "@/components/OwnerButton";
 
 export const Route = createFileRoute("/")({
   component: CatalogPage,
@@ -238,6 +239,7 @@ function CatalogPage() {
         selected={active ? has(active.id) : false}
         onToggle={toggle}
       />
+      <OwnerButton />
     </main>
   );
 }
