@@ -381,6 +381,7 @@ function MoodboardPage() {
       </section>
 
       <FullscreenComposer open={fullOpen} onClose={() => setFullOpen(false)} />
+      <OwnerButton />
     </main>
   );
 }
