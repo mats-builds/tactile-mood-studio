@@ -365,11 +365,21 @@ function BulkImportPage() {
       )}
 
       {/* Live gallery */}
-      {products.length > 0 && (
+      {(products.length > 0 || savedCount > 0) && (
         <section>
-          <div className="mb-4 flex items-center gap-2 text-[10px] uppercase tracking-[0.24em] text-black/50">
-            <Sparkles size={10} /> Moods-ified products
+          <div className="mb-4 flex items-center justify-between text-[10px] uppercase tracking-[0.24em] text-black/50">
+            <span className="flex items-center gap-2">
+              <Sparkles size={10} /> Pending review · {products.length}
+            </span>
+            {savedCount > 0 && (
+              <span className="text-emerald-700">{savedCount} saved to catalog</span>
+            )}
           </div>
+          {products.length === 0 && (
+            <div className="rounded-2xl border border-black/5 bg-white p-10 text-center text-sm text-black/40">
+              All caught up. Approved items live in your catalog.
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
             {products.map((p) => {
               const cutout = p.image_url?.startsWith("data:");
@@ -413,7 +423,7 @@ function BulkImportPage() {
                     </div>
                     <div className="mt-4 flex items-center gap-2">
                       <button
-                        onClick={() => runCutout(p)}
+                        onClick={() => approve(p)}
                         disabled={cutout || cutting}
                         className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-[11px] font-medium uppercase tracking-[0.16em] transition-opacity hover:opacity-90 disabled:opacity-40"
                         style={{ background: "#1A1A1A", color: "#F9F7F2" }}
@@ -423,7 +433,7 @@ function BulkImportPage() {
                         ) : (
                           <Scissors size={11} />
                         )}
-                        {cutout ? "Approved" : "Cutout & keep"}
+                        {cutting ? "Saving…" : "Approve & save"}
                       </button>
                       <button
                         onClick={() => dismiss(p)}
