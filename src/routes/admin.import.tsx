@@ -3,6 +3,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Download, Loader2, Sparkles, AlertCircle, CheckCircle2, Scissors, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { applyAlphaCutout } from "@/lib/alpha-cutout";
+import { userProductsStore } from "@/store/user-products";
+import type { Category, Product as CatalogProduct, Role } from "@/data/catalog";
 
 export const Route = createFileRoute("/admin/import")({
   component: BulkImportPage,
@@ -46,6 +48,38 @@ function BulkImportPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const cutoutRunning = useRef<Set<string>>(new Set());
   const [cuttingIds, setCuttingIds] = useState<Set<string>>(new Set());
+  const [savedCount, setSavedCount] = useState(0);
+
+  // Load all pending products (from any job) on mount so the user can review
+  // anything imported in previous sessions.
+  useEffect(() => {
+    supabase
+      .from("products")
+      .select("*")
+      .eq("status", "pending")
+      .order("created_at", { ascending: false })
+      .limit(200)
+      .then(({ data }) => {
+        if (data) setProducts(data as Product[]);
+      });
+
+    // Subscribe to all new pending product inserts even without an active job.
+    const allChan = supabase
+      .channel("pending-products")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "products" },
+        (payload) => {
+          const p = payload.new as Product;
+          if (p.status !== "pending") return;
+          setProducts((prev) => (prev.some((x) => x.id === p.id) ? prev : [p, ...prev]));
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(allChan);
+    };
+  }, []);
 
   // Subscribe to current job + its products
   useEffect(() => {
@@ -123,6 +157,72 @@ function BulkImportPage() {
   const dismiss = async (p: Product) => {
     setProducts((prev) => prev.filter((x) => x.id !== p.id));
     await supabase.from("products").update({ status: "rejected" }).eq("id", p.id);
+  };
+
+  const inferCategory = (raw: string | null): Category => {
+    const c = (raw ?? "").toLowerCase();
+    if (/(sofa|chair|stool|bench|seat|bank)/.test(c)) return "Seating";
+    if (/(table|tafel|desk)/.test(c)) return "Tables";
+    if (/(lamp|light|pendant|sconce)/.test(c)) return "Lighting";
+    if (/(shelf|cabinet|sideboard|storage|kast)/.test(c)) return "Storage";
+    if (/(rug|textile|cushion|pillow|throw)/.test(c)) return "Textiles";
+    if (/(art|print|poster|mirror)/.test(c)) return "Art";
+    return "Decor";
+  };
+
+  const inferRole = (cat: Category): Role => {
+    if (cat === "Seating" || cat === "Storage") return "ground";
+    if (cat === "Tables") return "surface";
+    if (cat === "Lighting") return "standing";
+    if (cat === "Textiles") return "floor";
+    if (cat === "Art") return "wall";
+    return "prop";
+  };
+
+  const approve = async (p: Product) => {
+    if (!p.image_url) return;
+    if (cutoutRunning.current.has(p.id)) return;
+    cutoutRunning.current.add(p.id);
+    setCuttingIds((s) => new Set(s).add(p.id));
+    try {
+      // Run cutout if not already a transparent data URL
+      const imageUrl = p.image_url.startsWith("data:")
+        ? p.image_url
+        : await applyAlphaCutout(p.image_url);
+
+      const cat = inferCategory(p.category);
+      const role = inferRole(cat);
+      const catalogProduct: CatalogProduct = {
+        id: `import-${p.id.slice(0, 8)}`,
+        name: p.name,
+        maker: p.maker ?? "—",
+        price: p.price != null ? `€ ${Number(p.price).toLocaleString("nl-NL")}` : "—",
+        category: cat,
+        src: imageUrl,
+        colors: ["linen", "bone"],
+        role,
+        sourceUrl: p.source_url,
+      };
+      const ok = userProductsStore.add(catalogProduct);
+      if (!ok) throw new Error(userProductsStore.getError() ?? "Could not save");
+
+      await supabase
+        .from("products")
+        .update({ image_url: imageUrl, status: "approved" })
+        .eq("id", p.id);
+      setProducts((prev) => prev.filter((x) => x.id !== p.id));
+      setSavedCount((n) => n + 1);
+    } catch (e) {
+      console.error("approve failed for", p.id, e);
+      setErrorText(e instanceof Error ? e.message : "Approve failed");
+    } finally {
+      cutoutRunning.current.delete(p.id);
+      setCuttingIds((s) => {
+        const n = new Set(s);
+        n.delete(p.id);
+        return n;
+      });
+    }
   };
 
   const startSync = async () => {
