@@ -50,6 +50,7 @@ function BulkImportPage() {
   const cutoutRunning = useRef<Set<string>>(new Set());
   const [cuttingIds, setCuttingIds] = useState<Set<string>>(new Set());
   const [savedCount, setSavedCount] = useState(0);
+  const [detail, setDetail] = useState<CatalogProduct | null>(null);
 
   // Load all pending products (from any job) on mount so the user can review
   // anything imported in previous sessions.
@@ -180,6 +181,39 @@ function BulkImportPage() {
     return "prop";
   };
 
+  const toCatalogProduct = (p: Product, imageUrl: string): CatalogProduct => {
+    const cat = inferCategory(p.category);
+    const role = inferRole(cat);
+    return {
+      id: `import-${p.id.slice(0, 8)}`,
+      name: p.name,
+      maker: p.maker ?? "—",
+      price: p.price != null ? `€ ${Number(p.price).toLocaleString("nl-NL")}` : "—",
+      category: cat,
+      src: imageUrl,
+      colors: ["linen", "bone"],
+      role,
+      sourceUrl: p.source_url,
+    };
+  };
+
+  const saveDirect = async (p: Product) => {
+    if (!p.image_url) return;
+    try {
+      const ok = userProductsStore.add(toCatalogProduct(p, p.image_url));
+      if (!ok) throw new Error(userProductsStore.getError() ?? "Could not save");
+      await supabase
+        .from("products")
+        .update({ status: "approved" })
+        .eq("id", p.id);
+      setProducts((prev) => prev.filter((x) => x.id !== p.id));
+      setSavedCount((n) => n + 1);
+    } catch (e) {
+      console.error("save failed for", p.id, e);
+      setErrorText(e instanceof Error ? e.message : "Save failed");
+    }
+  };
+
   const approve = async (p: Product) => {
     if (!p.image_url) return;
     if (cutoutRunning.current.has(p.id)) return;
@@ -191,20 +225,7 @@ function BulkImportPage() {
         ? p.image_url
         : await applyAlphaCutout(p.image_url);
 
-      const cat = inferCategory(p.category);
-      const role = inferRole(cat);
-      const catalogProduct: CatalogProduct = {
-        id: `import-${p.id.slice(0, 8)}`,
-        name: p.name,
-        maker: p.maker ?? "—",
-        price: p.price != null ? `€ ${Number(p.price).toLocaleString("nl-NL")}` : "—",
-        category: cat,
-        src: imageUrl,
-        colors: ["linen", "bone"],
-        role,
-        sourceUrl: p.source_url,
-      };
-      const ok = userProductsStore.add(catalogProduct);
+      const ok = userProductsStore.add(toCatalogProduct(p, imageUrl));
       if (!ok) throw new Error(userProductsStore.getError() ?? "Could not save");
 
       await supabase
