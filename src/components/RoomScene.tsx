@@ -270,7 +270,7 @@ function Piece({
   }, [scale, resizing]);
 
   const startDrag = (e: React.PointerEvent) => {
-    if (!editMode || !containerRef.current) return;
+    if (!editMode || !containerRef.current || locked) return;
     // First click selects; subsequent drags move.
     if (!selected) {
       e.stopPropagation();
