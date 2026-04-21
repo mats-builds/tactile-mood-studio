@@ -428,7 +428,34 @@ function Piece({
           >
             ▼
           </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onLayoutChange?.(product.id, { locked: true });
+            }}
+            title="Lock in place (sends behind)"
+            aria-label={`Lock ${product.name}`}
+            className="flex h-6 w-6 items-center justify-center rounded-sm text-[12px] text-ink hover:bg-muted"
+          >
+            🔒
+          </button>
         </div>
+      )}
+
+      {/* locked indicator + unlock affordance (always shown in edit mode) */}
+      {editMode && locked && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onLayoutChange?.(product.id, { locked: false });
+          }}
+          onPointerDown={(e) => e.stopPropagation()}
+          title={`Unlock ${product.name}`}
+          aria-label={`Unlock ${product.name}`}
+          className="absolute -top-2 -right-2 z-20 flex h-6 w-6 items-center justify-center rounded-full bg-ink/90 text-[11px] text-background shadow ring-1 ring-background hover:bg-ink"
+        >
+          🔒
+        </button>
       )}
 
       {/* resize handle (bottom-right) */}
