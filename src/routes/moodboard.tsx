@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { ArrowLeft, Sparkles, RefreshCw, Plus, Pencil, Check, RotateCcw, ImagePlus, FileText, Maximize2 } from "lucide-react";
+import { ArrowLeft, Sparkles, RefreshCw, Plus, Pencil, Check, RotateCcw, ImagePlus, FileText, Maximize2, Home, X } from "lucide-react";
 import {
   catalog,
   colorMap,
@@ -12,8 +12,10 @@ import {
 } from "@/data/catalog";
 import { useSelection } from "@/store/selection";
 import { useUserProducts } from "@/store/user-products";
+import { useUserRooms } from "@/store/user-rooms";
 import { RoomScene } from "@/components/RoomScene";
 import { MatchFromImageDialog } from "@/components/MatchFromImageDialog";
+import { EmptyMyRoomDialog } from "@/components/EmptyMyRoomDialog";
 import { FullscreenComposer } from "@/components/FullscreenComposer";
 import { OwnerButton } from "@/components/OwnerButton";
 
@@ -43,8 +45,10 @@ function MoodboardPage() {
     resetAllLayout,
   } = useSelection();
   const { products: userProducts } = useUserProducts();
+  const { rooms: userRooms, remove: removeUserRoom } = useUserRooms();
   const [editMode, setEditMode] = useState(false);
   const [matchOpen, setMatchOpen] = useState(false);
+  const [emptyRoomOpen, setEmptyRoomOpen] = useState(false);
   const [fullOpen, setFullOpen] = useState(false);
 
   const handleFinish = () => {
@@ -70,8 +74,21 @@ function MoodboardPage() {
   const activePalette: Palette =
     allPalettes.find((p) => p.id === paletteId) ?? aiPalette;
 
+  const allScenes: Scene[] = useMemo(
+    () => [
+      ...scenes,
+      ...userRooms.map((r) => ({
+        id: r.id,
+        name: r.name,
+        kind: "image" as const,
+        src: r.src,
+      })),
+    ],
+    [userRooms],
+  );
+
   const activeScene: Scene =
-    scenes.find((s) => s.id === sceneId) ?? scenes[0];
+    allScenes.find((s) => s.id === sceneId) ?? allScenes[0];
 
   if (items.length === 0) {
     return (
