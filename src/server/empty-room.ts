@@ -62,8 +62,10 @@ export const emptyRoom = createServerFn({ method: "POST" })
     }
 
     const body = {
-      // Pro image model — slower but much better at preserving architecture.
-      model: "google/gemini-3-pro-image-preview",
+      // Flash image model — fast enough to fit the edge request budget while
+      // still preserving architecture well. The Pro variant exceeds the
+      // upstream timeout for room-sized photos.
+      model: "google/gemini-3.1-flash-image-preview",
       messages: [
         {
           role: "user",
