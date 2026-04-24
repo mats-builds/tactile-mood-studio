@@ -2,3 +2,6 @@ project_id = "mryxoxsxnabndfjmjvat"
 
 [functions.image-proxy]
 verify_jwt = false
+
+[functions.empty-room-worker]
+verify_jwt = false

@@ -1,121 +1,69 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 /**
- * Take a photo of a real room and return a same-perspective, same-architecture
- * version with every piece of movable furniture removed. The architecture
- * (floor, walls, ceiling, beams, windows, stairs, doors, radiators, built-ins)
- * must be preserved so the result can serve as a faithful backdrop for the
- * moodboard composer.
+ * "Empty my room" runs as a queued background job because the AI image edit
+ * routinely takes 30–60s — well beyond the edge request budget. The flow:
+ *
+ *   1. `startEmptyRoom`  — inserts a row in `room_jobs`, fires the worker
+ *                          edge function (no await) and returns a jobId.
+ *   2. `pollEmptyRoom`   — client polls this until `status === "done"` and
+ *                          the result image is available.
  */
 
-const inputSchema = z.object({
+const startSchema = z.object({
   /** data URL of the uploaded room photo */
   imageDataUrl: z.string().min(20),
 });
 
-const SYSTEM_PROMPT = `You are an architectural visualization AI.
+const pollSchema = z.object({
+  jobId: z.string().uuid(),
+});
 
-You will be given a photo of a real room. Your job is to produce a NEW image
-of the SAME room from the SAME camera angle and perspective, with EVERY piece
-of movable furniture and decor REMOVED.
-
-KEEP exactly as in the source photo:
-- Floor (same material, color, plank direction, joins)
-- Walls (same paint color, same wainscoting / panelling)
-- Ceiling (same beams, same paint, same texture)
-- Windows (same shape, frames, mullions, view through them)
-- Doors and door frames
-- Stairs, banisters, balustrades
-- Radiators, vents, electrical outlets
-- Built-in shelves, fireplaces, columns, fixed cabinetry
-- Light fixtures that are mounted to the wall or ceiling
-- The natural light, time of day, and overall color temperature
-- The exact camera angle, focal length and perspective
-
-REMOVE completely:
-- Sofas, chairs, stools, benches, ottomans
-- Tables (dining, coffee, side, console)
-- Free-standing lamps, floor lamps
-- Rugs, throws, cushions, blankets
-- Plants in pots, vases, candles, books, decor objects
-- TVs, electronics, audio gear, speakers
-- Free-standing shelves, sideboards, dressers
-- Curtains and blinds (unless they are clearly built-in shutters)
-- Any other movable / personal items
-
-The result should look like a clean, empty, photo-realistic version of the
-same architectural shell — as if the owner just moved out. Keep it photographic
-(not stylized or illustrated). Match the lighting and shadows of the source
-so an inserted piece of furniture would look like it belongs.
-
-Output only the image.`;
-
-export const emptyRoom = createServerFn({ method: "POST" })
-  .inputValidator((input: unknown) => inputSchema.parse(input))
+export const startEmptyRoom = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => startSchema.parse(input))
   .handler(async ({ data }) => {
-    const apiKey = process.env.LOVABLE_API_KEY;
-    if (!apiKey) {
-      throw new Error(
-        "AI gateway is not configured. Please enable Lovable Cloud.",
-      );
+    const { data: job, error } = await supabaseAdmin
+      .from("room_jobs")
+      .insert({ input_image: data.imageDataUrl, status: "pending" })
+      .select("id")
+      .single();
+    if (error || !job) {
+      console.error("startEmptyRoom insert failed", error);
+      throw new Error("Couldn't queue the job. Please try again.");
     }
 
-    const body = {
-      // Flash image model — fast enough to fit the edge request budget while
-      // still preserving architecture well. The Pro variant exceeds the
-      // upstream timeout for room-sized photos.
-      model: "google/gemini-3.1-flash-image-preview",
-      messages: [
-        {
-          role: "user",
-          content: [
-            { type: "text", text: SYSTEM_PROMPT },
-            { type: "image_url", image_url: { url: data.imageDataUrl } },
-          ],
-        },
-      ],
-      modalities: ["image", "text"],
-    };
-
-    const res = await fetch(
-      "https://ai.gateway.lovable.dev/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(body),
+    // Fire the worker without awaiting — the worker will outlive this request
+    // and write the result back to the row. We swallow errors here because
+    // the client polls the row for status anyway.
+    const workerUrl = `${process.env.SUPABASE_URL}/functions/v1/empty-room-worker`;
+    fetch(workerUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
       },
-    );
+      body: JSON.stringify({ jobId: job.id }),
+    }).catch((e) => console.error("failed to kick worker", e));
 
-    if (!res.ok) {
-      const text = await res.text().catch(() => "");
-      if (res.status === 429) {
-        throw new Error("Too many requests right now — please try again in a moment.");
-      }
-      if (res.status === 402) {
-        throw new Error(
-          "AI credits exhausted. Add credits in Settings → Workspace → Usage.",
-        );
-      }
-      console.error("empty-room gateway error", res.status, text);
-      throw new Error("The AI couldn't process that photo. Please try another.");
+    return { jobId: job.id };
+  });
+
+export const pollEmptyRoom = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => pollSchema.parse(input))
+  .handler(async ({ data }) => {
+    const { data: job, error } = await supabaseAdmin
+      .from("room_jobs")
+      .select("status, output_image, error_message")
+      .eq("id", data.jobId)
+      .single();
+    if (error || !job) {
+      throw new Error("Job not found.");
     }
-
-    const json = (await res.json()) as {
-      choices?: Array<{
-        message?: {
-          images?: Array<{ image_url?: { url?: string } }>;
-        };
-      }>;
+    return {
+      status: job.status as "pending" | "processing" | "done" | "failed",
+      imageDataUrl: job.output_image ?? null,
+      error: job.error_message ?? null,
     };
-
-    const url = json.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-    if (!url) {
-      throw new Error("AI didn't return an image. Please try again.");
-    }
-
-    return { imageDataUrl: url };
   });

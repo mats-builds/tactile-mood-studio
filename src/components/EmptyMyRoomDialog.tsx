@@ -7,7 +7,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { emptyRoom } from "@/server/empty-room";
+import { startEmptyRoom, pollEmptyRoom } from "@/server/empty-room";
 import { userRoomsStore } from "@/store/user-rooms";
 
 type Status = "idle" | "reading" | "generating" | "done" | "error";
@@ -90,9 +90,28 @@ export function EmptyMyRoomDialog({
       setOriginalUrl(compact);
       setStatus("generating");
 
-      const result = await emptyRoom({ data: { imageDataUrl: compact } });
-      setEmptiedUrl(result.imageDataUrl);
-      setStatus("done");
+      const { jobId } = await startEmptyRoom({ data: { imageDataUrl: compact } });
+
+      // Poll the job until it's done or failed. The AI call typically
+      // finishes in 20–60s; cap the wait at ~3 minutes.
+      const startedAt = Date.now();
+      const TIMEOUT_MS = 3 * 60 * 1000;
+      // eslint-disable-next-line no-constant-condition
+      while (true) {
+        await new Promise((r) => setTimeout(r, 2500));
+        const status = await pollEmptyRoom({ data: { jobId } });
+        if (status.status === "done" && status.imageDataUrl) {
+          setEmptiedUrl(status.imageDataUrl);
+          setStatus("done");
+          break;
+        }
+        if (status.status === "failed") {
+          throw new Error(status.error ?? "The AI couldn't process that photo.");
+        }
+        if (Date.now() - startedAt > TIMEOUT_MS) {
+          throw new Error("This is taking longer than expected. Please try again.");
+        }
+      }
     } catch (err) {
       console.error("empty-room failed", err);
       setError(

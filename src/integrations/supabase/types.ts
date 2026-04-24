@@ -113,6 +113,36 @@ export type Database = {
         }
         Relationships: []
       }
+      room_jobs: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          id: string
+          input_image: string
+          output_image: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          input_image: string
+          output_image?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          input_image?: string
+          output_image?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
