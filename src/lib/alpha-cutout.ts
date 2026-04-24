@@ -16,11 +16,7 @@ async function fetchViaProxy(srcUrl: string): Promise<Blob> {
   }
   if (!SUPABASE_URL) throw new Error("Supabase URL not configured");
   const proxied = `${SUPABASE_URL}/functions/v1/image-proxy?url=${encodeURIComponent(srcUrl)}`;
-  const res = await fetch(proxied, {
-    headers: {
-      apikey: (supabase as unknown as { supabaseKey?: string }).supabaseKey ?? "",
-    },
-  });
+  const res = await fetch(proxied);
   if (!res.ok) throw new Error(`Image proxy failed: ${res.status}`);
   return await res.blob();
 }
