@@ -177,6 +177,12 @@ function MoodboardPage() {
         onMatched={() => setEditMode(true)}
       />
 
+      <EmptyMyRoomDialog
+        open={emptyRoomOpen}
+        onOpenChange={setEmptyRoomOpen}
+        onCreated={(sceneId) => setSceneId(sceneId)}
+      />
+
       {/* Composed Room Scene */}
       <section className="mx-auto max-w-[1500px] px-6 md:px-10">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
@@ -248,47 +254,78 @@ function MoodboardPage() {
                 Place it on a palette, or in a real room.
               </h2>
             </div>
+            <button
+              onClick={() => setEmptyRoomOpen(true)}
+              className="inline-flex items-center gap-2 rounded-full border border-ink bg-ink px-4 py-2 text-xs uppercase tracking-[0.18em] text-background transition-transform hover:scale-[1.02]"
+            >
+              <Home size={14} /> Use my room
+            </button>
           </div>
 
           <div className="mt-6 grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-            {scenes.map((s) => {
+            {allScenes.map((s) => {
               const active = activeScene.id === s.id;
+              const isUserRoom = s.id.startsWith("user:");
               return (
-                <button
+                <div
                   key={s.id}
-                  onClick={() => setSceneId(s.id)}
-                  className={`group overflow-hidden rounded-2xl border text-left transition-all ${
+                  className={`group relative overflow-hidden rounded-2xl border text-left transition-all ${
                     active
                       ? "border-ink shadow-[var(--shadow-soft)]"
                       : "border-border hover:border-foreground/40"
                   }`}
                 >
-                  <div className="relative aspect-[16/10] w-full overflow-hidden bg-secondary">
-                    {s.kind === "image" && s.src ? (
-                      <img
-                        src={s.src}
-                        alt={s.name}
-                        loading="lazy"
-                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      />
-                    ) : (
-                      <div
-                        className="h-full w-full"
-                        style={{
-                          background: `linear-gradient(180deg, ${colorMap[activePalette.colors[1] ?? "linen"]} 0%, ${colorMap[activePalette.colors[0] ?? "cream"]} 60%, ${colorMap[activePalette.colors[3] ?? "jute"]} 100%)`,
-                        }}
-                      />
-                    )}
-                  </div>
-                  <div className="flex items-center justify-between px-3 py-2">
-                    <span className="font-serif text-base text-ink">{s.name}</span>
-                    {active && (
-                      <span className="text-[10px] uppercase tracking-[0.2em] text-rust">
-                        Active
-                      </span>
-                    )}
-                  </div>
-                </button>
+                  <button
+                    onClick={() => setSceneId(s.id)}
+                    className="block w-full text-left"
+                  >
+                    <div className="relative aspect-[16/10] w-full overflow-hidden bg-secondary">
+                      {s.kind === "image" && s.src ? (
+                        <img
+                          src={s.src}
+                          alt={s.name}
+                          loading="lazy"
+                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        />
+                      ) : (
+                        <div
+                          className="h-full w-full"
+                          style={{
+                            background: `linear-gradient(180deg, ${colorMap[activePalette.colors[1] ?? "linen"]} 0%, ${colorMap[activePalette.colors[0] ?? "cream"]} 60%, ${colorMap[activePalette.colors[3] ?? "jute"]} 100%)`,
+                          }}
+                        />
+                      )}
+                      {isUserRoom && (
+                        <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-background/90 px-2 py-0.5 text-[9px] uppercase tracking-[0.2em] text-ink shadow ring-1 ring-border backdrop-blur">
+                          <Home size={10} /> Yours
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center justify-between px-3 py-2">
+                      <span className="font-serif text-base text-ink">{s.name}</span>
+                      {active && (
+                        <span className="text-[10px] uppercase tracking-[0.2em] text-rust">
+                          Active
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                  {isUserRoom && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (window.confirm(`Remove "${s.name}" from your saved rooms?`)) {
+                          if (active) setSceneId(null);
+                          removeUserRoom(s.id);
+                        }
+                      }}
+                      aria-label={`Remove ${s.name}`}
+                      className="absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-background/90 text-ink opacity-0 ring-1 ring-border backdrop-blur transition-opacity hover:bg-rust hover:text-primary-foreground group-hover:opacity-100"
+                    >
+                      <X size={12} />
+                    </button>
+                  )}
+                </div>
               );
             })}
           </div>
