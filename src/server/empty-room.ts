@@ -37,15 +37,26 @@ export const startEmptyRoom = createServerFn({ method: "POST" })
     // Fire the worker without awaiting — the worker will outlive this request
     // and write the result back to the row. We swallow errors here because
     // the client polls the row for status anyway.
-    const workerUrl = `${process.env.SUPABASE_URL}/functions/v1/empty-room-worker`;
-    fetch(workerUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
-      },
-      body: JSON.stringify({ jobId: job.id }),
-    }).catch((e) => console.error("failed to kick worker", e));
+    const supabaseUrl =
+      process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL;
+    const serviceKey =
+      process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_ANON_KEY;
+    if (!supabaseUrl || !serviceKey) {
+      console.error("worker kick: missing env", {
+        hasUrl: !!supabaseUrl,
+        hasKey: !!serviceKey,
+      });
+    } else {
+      const workerUrl = `${supabaseUrl}/functions/v1/empty-room-worker`;
+      fetch(workerUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${serviceKey}`,
+        },
+        body: JSON.stringify({ jobId: job.id }),
+      }).catch((e) => console.error("failed to kick worker", e));
+    }
 
     return { jobId: job.id };
   });
