@@ -1,5 +1,4 @@
 import { removeBackground } from "@imgly/background-removal";
-import { supabase } from "@/integrations/supabase/client";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 
