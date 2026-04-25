@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { Product } from "@/data/catalog";
 import { supabase } from "@/integrations/supabase/client";
+import { guestMode } from "@/store/guest";
 
 type Listener = () => void;
 const listeners = new Set<Listener>();
@@ -98,6 +99,12 @@ export const userProductsStore = {
     emit();
   },
   add(p: Product) {
+    if (guestMode.isGuest()) {
+      products = [p, ...products.filter((x) => x.id !== p.id)];
+      loaded = true;
+      emit();
+      return true;
+    }
     if (!currentUserId) return false;
     products = [p, ...products.filter((x) => x.id !== p.id)];
     emit();
@@ -116,6 +123,11 @@ export const userProductsStore = {
     return true;
   },
   remove(id: string) {
+    if (guestMode.isGuest()) {
+      products = products.filter((p) => p.id !== id);
+      emit();
+      return;
+    }
     if (!currentUserId) return;
     const prev = products;
     products = products.filter((p) => p.id !== id);
@@ -133,6 +145,11 @@ export const userProductsStore = {
       });
   },
   update(id: string, patch: Partial<Product>) {
+    if (guestMode.isGuest()) {
+      products = products.map((p) => (p.id === id ? { ...p, ...patch } : p));
+      emit();
+      return true;
+    }
     if (!currentUserId) return false;
     const prev = products;
     products = products.map((p) => (p.id === id ? { ...p, ...patch } : p));
