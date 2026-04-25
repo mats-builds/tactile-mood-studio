@@ -194,12 +194,52 @@ function AllAdditionsView({
   onRemove,
   onEdit,
   onBack,
+  onUpdate,
 }: {
   products: Product[];
   onRemove: (id: string) => void;
   onEdit: (p: Product) => void;
   onBack: () => void;
+  onUpdate: (id: string, patch: Partial<Product>) => boolean;
 }) {
+  const [retightening, setRetightening] = useState(false);
+  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
+
+  async function handleRetightenAll() {
+    if (retightening || products.length === 0) return;
+    setRetightening(true);
+    setProgress({ done: 0, total: products.length });
+    let trimmed = 0;
+    let skipped = 0;
+    try {
+      for (let i = 0; i < products.length; i++) {
+        const p = products[i];
+        // Only re-trim PNG cutouts we own (data URLs). Remote/JPG showcases stay as-is.
+        if (p.src && p.src.startsWith("data:image/png")) {
+          try {
+            const next = await trimTransparentEdges(p.src);
+            if (next !== p.src) {
+              onUpdate(p.id, { src: next });
+              trimmed++;
+            }
+          } catch {
+            skipped++;
+          }
+        } else {
+          skipped++;
+        }
+        setProgress({ done: i + 1, total: products.length });
+      }
+      toast.success(
+        `Re-tightened ${trimmed} ${trimmed === 1 ? "piece" : "pieces"}` +
+          (skipped ? ` · ${skipped} skipped` : ""),
+      );
+    } finally {
+      setRetightening(false);
+      setProgress(null);
+    }
+  }
+
   return (
     <div className="flex h-full flex-col">
       <SheetHeader className="border-b border-border/60 px-6 py-5 text-left">
@@ -215,6 +255,25 @@ function AllAdditionsView({
         <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
           {products.length} {products.length === 1 ? "piece" : "pieces"} added by you
         </p>
+        {products.length > 0 && (
+          <button
+            type="button"
+            onClick={handleRetightenAll}
+            disabled={retightening}
+            className="mt-3 inline-flex w-fit items-center gap-2 rounded-full bg-ink px-3 py-1.5 text-[10px] uppercase tracking-[0.18em] text-background transition-opacity hover:opacity-90 disabled:opacity-60"
+          >
+            {retightening ? (
+              <>
+                <Loader2 size={12} className="animate-spin" />
+                Re-tightening {progress ? `${progress.done}/${progress.total}` : "…"}
+              </>
+            ) : (
+              <>
+                <Crop size={12} /> Re-tighten all
+              </>
+            )}
+          </button>
+        )}
       </SheetHeader>
       <div className="flex-1 overflow-y-auto px-4 py-4">
         {products.length === 0 ? (
