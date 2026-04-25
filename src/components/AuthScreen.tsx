@@ -2,6 +2,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { toast } from "sonner";
+import { guestMode } from "@/store/guest";
 
 export function AuthScreen() {
   const [mode, setMode] = useState<"signin" | "signup">("signin");
@@ -113,6 +114,24 @@ export function AuthScreen() {
             ? "No account yet? Create one"
             : "Already have an account? Sign in"}
         </button>
+
+        <div className="my-5 flex items-center gap-3 text-[10px] uppercase tracking-[0.24em] text-muted-foreground">
+          <div className="h-px flex-1 bg-border" />
+          demo
+          <div className="h-px flex-1 bg-border" />
+        </div>
+        <button
+          onClick={() => {
+            guestMode.enable();
+            toast.message("Demo mode — nothing is saved.");
+          }}
+          className="w-full rounded-lg border border-dashed border-border bg-background py-3 text-sm font-medium text-muted-foreground transition hover:bg-secondary hover:text-foreground"
+        >
+          Try as guest →
+        </button>
+        <p className="mt-2 text-center text-[11px] text-muted-foreground/80">
+          Unofficial preview · data lives only in this tab
+        </p>
       </div>
     </div>
   );
