@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Menu, Plus, Link2, BookOpen, Sparkles, Pencil, X, ArrowLeft, Crop, Loader2 } from "lucide-react";
+import { Menu, Plus, Link2, BookOpen, Sparkles, Pencil, X, ArrowLeft, Crop, Loader2, LogOut } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -14,6 +14,9 @@ import { useUserProducts } from "@/store/user-products";
 import type { Product } from "@/data/catalog";
 import { trimTransparentEdges } from "@/lib/alpha-cutout";
 import { toast } from "sonner";
+import { useAuth, signOut } from "@/store/auth";
+import { guestMode } from "@/store/guest";
+import { useEffect } from "react";
 
 export function SideMenu() {
   const [open, setOpen] = useState(false);
@@ -21,6 +24,12 @@ export function SideMenu() {
   const [view, setView] = useState<"menu" | "all">("menu");
   const [editing, setEditing] = useState<Product | null>(null);
   const { products, remove, update } = useUserProducts();
+  const { user } = useAuth();
+  const [, force] = useState(0);
+  useEffect(() => guestMode.subscribe(() => force((n) => n + 1)), []);
+  const isGuest = guestMode.isGuest();
+  const accountLabel = isGuest ? "Guest demo" : user?.email ?? "Account";
+  const accountSub = isGuest ? "Exit demo" : "Sign out";
 
   // Keep the editing draft in sync if the underlying product mutates (e.g. image deleted).
   const liveEditing = editing
@@ -124,6 +133,32 @@ export function SideMenu() {
           )}
 
           <div className="absolute bottom-6 left-6 right-6">
+            {(user || isGuest) && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (isGuest) {
+                    guestMode.disable();
+                    setOpen(false);
+                    setTimeout(() => window.location.reload(), 100);
+                  } else {
+                    signOut();
+                    setOpen(false);
+                  }
+                }}
+                className="mb-3 flex w-full items-center gap-3 rounded-2xl border border-border bg-secondary/40 px-3 py-2.5 text-left transition-colors hover:bg-secondary"
+              >
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-background text-ink">
+                  <LogOut size={14} strokeWidth={1.6} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-xs text-ink">{accountLabel}</p>
+                  <p className="truncate text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                    {accountSub}
+                  </p>
+                </div>
+              </button>
+            )}
             <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
               Supermoods · 2026
             </p>
