@@ -245,6 +245,8 @@ function Piece({
   flipX,
   zOrder,
   locked,
+  rotateZ,
+  rotateY,
   editMode,
   selected,
   onSelect,
