@@ -131,8 +131,9 @@ export function AddWithUrlDialog({
             Add with URL
           </DialogTitle>
           <DialogDescription className="text-sm text-muted-foreground">
-            Paste a product page from any furniture site — we'll fetch the image,
-            specs and details.
+            Paste a product page from any furniture site — or a paint colour URL
+            from <span className="text-ink">farrow-ball.com</span> — and we'll
+            fetch the image, specs and details.
           </DialogDescription>
         </DialogHeader>
 
@@ -150,7 +151,7 @@ export function AddWithUrlDialog({
                   autoFocus
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
-                  placeholder="Paste any product URL — ikea.com, wayfair.com, etc."
+                  placeholder="Paste any product URL — ikea.com, farrow-ball.com, etc."
                   className="flex-1 bg-transparent text-sm text-ink placeholder:text-muted-foreground focus:outline-none"
                   disabled={status === "loading"}
                 />
