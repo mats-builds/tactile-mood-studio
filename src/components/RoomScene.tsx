@@ -221,6 +221,8 @@ type PieceProps = {
   flipX: boolean;
   zOrder: number;
   locked: boolean;
+  rotateZ: number;
+  rotateY: number;
   editMode: boolean;
   selected: boolean;
   onSelect: () => void;
