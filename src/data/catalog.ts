@@ -99,7 +99,7 @@ export const colorMap: Record<string, string> = {
 };
 
 export const catalog: Product[] = [
-  { id: "sofa", name: "Lina Curved Sofa", maker: "Studio Palerma", price: "€ 4,890", category: "Seating", src: sofa, colors: ["rust", "walnut"], role: "ground", dims: { w: 240, h: 82 } },
+  // Built-in catalog intentionally empty — every user adds their own pieces.
   {
     id: "sofa-cataline",
     name: "Cataline 3-piece Modular Sofa",
