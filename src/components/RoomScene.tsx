@@ -378,16 +378,17 @@ function Piece({
         className={`h-full w-auto max-w-none object-contain object-bottom drop-shadow-[0_22px_22px_oklch(0.22_0.02_50_/_0.35)] transition-transform duration-300 ${
           !editMode ? "group-hover/piece:-translate-y-1 group-hover/piece:scale-[1.04]" : ""
         } ${editMode && locked ? "opacity-90" : ""}`}
-        style={
-          isFloor
-            ? {
-                transform: `perspective(800px) rotateX(58deg)${flipX ? " scaleX(-1)" : ""}`,
-                objectFit: "cover",
-              }
-            : flipX
-              ? { transform: "scaleX(-1)" }
-              : undefined
-        }
+        style={(() => {
+          const parts: string[] = [];
+          if (rotateY) parts.push("perspective(900px)");
+          if (isFloor) parts.push("rotateX(58deg)");
+          if (rotateY) parts.push(`rotateY(${rotateY}deg)`);
+          if (rotateZ) parts.push(`rotate(${rotateZ}deg)`);
+          if (flipX) parts.push("scaleX(-1)");
+          const transform = parts.join(" ");
+          const base: React.CSSProperties = isFloor ? { objectFit: "cover" } : {};
+          return transform ? { ...base, transform, transformOrigin: "center bottom" } : base;
+        })()}
       />
 
       {/* edit-mode frame */}
