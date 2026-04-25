@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Menu, Plus, Link2, BookOpen, Sparkles, Pencil, X, ArrowLeft } from "lucide-react";
+import { Menu, Plus, Link2, BookOpen, Sparkles, Pencil, X, ArrowLeft, Crop, Loader2 } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -12,13 +12,15 @@ import { AddWithUrlDialog } from "@/components/AddWithUrlDialog";
 import { EditProductDialog } from "@/components/EditProductDialog";
 import { useUserProducts } from "@/store/user-products";
 import type { Product } from "@/data/catalog";
+import { trimTransparentEdges } from "@/lib/alpha-cutout";
+import { toast } from "sonner";
 
 export function SideMenu() {
   const [open, setOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [view, setView] = useState<"menu" | "all">("menu");
   const [editing, setEditing] = useState<Product | null>(null);
-  const { products, remove } = useUserProducts();
+  const { products, remove, update } = useUserProducts();
 
   // Keep the editing draft in sync if the underlying product mutates (e.g. image deleted).
   const liveEditing = editing
@@ -49,6 +51,7 @@ export function SideMenu() {
               onRemove={remove}
               onEdit={(p) => setEditing(p)}
               onBack={() => setView("menu")}
+              onUpdate={update}
             />
           ) : (
             <>
