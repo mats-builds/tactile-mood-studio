@@ -288,3 +288,14 @@ export function AddWithUrlDialog({
     </Dialog>
   );
 }
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="block">
+      <span className="mb-1 block text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+        {label}
+      </span>
+      {children}
+    </label>
+  );
+}
