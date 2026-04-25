@@ -149,10 +149,24 @@ function extractFarrowBallPaint(html: string, url: string): {
   }
 
   // Number: e.g. "No. 267" or "No. CB5" — F&B uses both numeric and
-  // alphanumeric reference codes. Accept letters + digits, but require at
-  // least one digit so we don't catch words like "No. None".
-  const numMatch = html.match(/No\.?\s*([A-Z]{0,3}\d{1,4}[A-Z]?)\b/);
-  const number = numMatch ? numMatch[1] : undefined;
+  // alphanumeric reference codes. We must scope this to the *current* paint
+  // and not pick up reference codes from "related colours" further down the
+  // page. Strategy: look only at occurrences of "No. <CODE>" that appear on
+  // the same line/element as the paint name in the title block.
+  let number: string | undefined;
+  if (name) {
+    // Build a window of HTML that contains the colour name and the immediately
+    // following ~400 chars (where F&B places "No. XYZ" in the title block).
+    const nameEsc = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const nameRe = new RegExp(
+      `${nameEsc}[\\s\\S]{0,400}?No\\.?\\s*([A-Z]{0,3}\\d{1,4}[A-Z]?)\\b`,
+      "i",
+    );
+    const m = nameRe.exec(html);
+    if (m) number = m[1];
+    // Pages built client-side may not render any No. server-side — leave
+    // `number` undefined rather than guessing from related colours.
+  }
 
   // Hex extraction — Farrow & Ball pages render the actual paint colour as the
   // background-color of an element with class "paint-page". That is the
