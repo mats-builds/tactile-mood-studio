@@ -196,6 +196,8 @@ export function RoomScene({
             flipX={override.flipX ?? false}
             zOrder={override.z ?? 0}
             locked={override.locked ?? false}
+            rotateZ={override.rotateZ ?? 0}
+            rotateY={override.rotateY ?? 0}
             editMode={editMode}
             selected={selectedId === item.id}
             onSelect={() => setSelectedId(item.id)}
@@ -221,6 +223,8 @@ type PieceProps = {
   flipX: boolean;
   zOrder: number;
   locked: boolean;
+  rotateZ: number;
+  rotateY: number;
   editMode: boolean;
   selected: boolean;
   onSelect: () => void;
@@ -241,6 +245,8 @@ function Piece({
   flipX,
   zOrder,
   locked,
+  rotateZ,
+  rotateY,
   editMode,
   selected,
   onSelect,
@@ -372,16 +378,17 @@ function Piece({
         className={`h-full w-auto max-w-none object-contain object-bottom drop-shadow-[0_22px_22px_oklch(0.22_0.02_50_/_0.35)] transition-transform duration-300 ${
           !editMode ? "group-hover/piece:-translate-y-1 group-hover/piece:scale-[1.04]" : ""
         } ${editMode && locked ? "opacity-90" : ""}`}
-        style={
-          isFloor
-            ? {
-                transform: `perspective(800px) rotateX(58deg)${flipX ? " scaleX(-1)" : ""}`,
-                objectFit: "cover",
-              }
-            : flipX
-              ? { transform: "scaleX(-1)" }
-              : undefined
-        }
+        style={(() => {
+          const parts: string[] = [];
+          if (rotateY) parts.push("perspective(900px)");
+          if (isFloor) parts.push("rotateX(58deg)");
+          if (rotateY) parts.push(`rotateY(${rotateY}deg)`);
+          if (rotateZ) parts.push(`rotate(${rotateZ}deg)`);
+          if (flipX) parts.push("scaleX(-1)");
+          const transform = parts.join(" ");
+          const base: React.CSSProperties = isFloor ? { objectFit: "cover" } : {};
+          return transform ? { ...base, transform, transformOrigin: "center bottom" } : base;
+        })()}
       />
 
       {/* edit-mode frame */}
@@ -406,6 +413,63 @@ function Piece({
           >
             ⇋
           </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onLayoutChange?.(product.id, { rotateZ: Math.max(-180, (rotateZ ?? 0) - 5) });
+            }}
+            title="Tilt left 5°"
+            aria-label={`Tilt ${product.name} left`}
+            className="flex h-6 w-6 items-center justify-center rounded-sm text-[12px] text-ink hover:bg-muted"
+          >
+            ↺°
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onLayoutChange?.(product.id, { rotateZ: Math.min(180, (rotateZ ?? 0) + 5) });
+            }}
+            title="Tilt right 5°"
+            aria-label={`Tilt ${product.name} right`}
+            className="flex h-6 w-6 items-center justify-center rounded-sm text-[12px] text-ink hover:bg-muted"
+          >
+            ↻°
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onLayoutChange?.(product.id, { rotateY: Math.max(-75, (rotateY ?? 0) - 10) });
+            }}
+            title="Turn left (3D)"
+            aria-label={`Turn ${product.name} left in 3D`}
+            className="flex h-6 w-7 items-center justify-center rounded-sm text-[11px] text-ink hover:bg-muted"
+          >
+            ◀3D
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onLayoutChange?.(product.id, { rotateY: Math.min(75, (rotateY ?? 0) + 10) });
+            }}
+            title="Turn right (3D)"
+            aria-label={`Turn ${product.name} right in 3D`}
+            className="flex h-6 w-7 items-center justify-center rounded-sm text-[11px] text-ink hover:bg-muted"
+          >
+            3D▶
+          </button>
+          {(rotateZ !== 0 || rotateY !== 0) && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onLayoutChange?.(product.id, { rotateZ: 0, rotateY: 0 });
+              }}
+              title="Reset rotation"
+              aria-label={`Reset rotation of ${product.name}`}
+              className="flex h-6 w-6 items-center justify-center rounded-sm text-[12px] text-ink hover:bg-muted"
+            >
+              ⟲
+            </button>
+          )}
           <button
             onClick={(e) => {
               e.stopPropagation();
