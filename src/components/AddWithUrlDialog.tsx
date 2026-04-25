@@ -73,7 +73,7 @@ export function AddWithUrlDialog({
       const cat = (raw.category as Category) || "Decor";
       const role = (raw.role as Role) || "ground";
       const product: Product = {
-        id: `user-${slugify(name)}-${Date.now().toString(36)}`,
+        id: crypto.randomUUID(),
         name,
         maker: raw.maker ?? "—",
         price: raw.price ?? "—",
