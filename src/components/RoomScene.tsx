@@ -416,6 +416,63 @@ function Piece({
           <button
             onClick={(e) => {
               e.stopPropagation();
+              onLayoutChange?.(product.id, { rotateZ: Math.max(-180, (rotateZ ?? 0) - 5) });
+            }}
+            title="Tilt left 5°"
+            aria-label={`Tilt ${product.name} left`}
+            className="flex h-6 w-6 items-center justify-center rounded-sm text-[12px] text-ink hover:bg-muted"
+          >
+            ↺°
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onLayoutChange?.(product.id, { rotateZ: Math.min(180, (rotateZ ?? 0) + 5) });
+            }}
+            title="Tilt right 5°"
+            aria-label={`Tilt ${product.name} right`}
+            className="flex h-6 w-6 items-center justify-center rounded-sm text-[12px] text-ink hover:bg-muted"
+          >
+            ↻°
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onLayoutChange?.(product.id, { rotateY: Math.max(-75, (rotateY ?? 0) - 10) });
+            }}
+            title="Turn left (3D)"
+            aria-label={`Turn ${product.name} left in 3D`}
+            className="flex h-6 w-7 items-center justify-center rounded-sm text-[11px] text-ink hover:bg-muted"
+          >
+            ◀3D
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onLayoutChange?.(product.id, { rotateY: Math.min(75, (rotateY ?? 0) + 10) });
+            }}
+            title="Turn right (3D)"
+            aria-label={`Turn ${product.name} right in 3D`}
+            className="flex h-6 w-7 items-center justify-center rounded-sm text-[11px] text-ink hover:bg-muted"
+          >
+            3D▶
+          </button>
+          {(rotateZ !== 0 || rotateY !== 0) && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onLayoutChange?.(product.id, { rotateZ: 0, rotateY: 0 });
+              }}
+              title="Reset rotation"
+              aria-label={`Reset rotation of ${product.name}`}
+              className="flex h-6 w-6 items-center justify-center rounded-sm text-[12px] text-ink hover:bg-muted"
+            >
+              ⟲
+            </button>
+          )}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
               onLayoutChange?.(product.id, { z: (zOrder ?? 0) + 1 });
             }}
             title="Bring to front"
