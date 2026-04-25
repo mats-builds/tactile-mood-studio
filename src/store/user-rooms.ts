@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { guestMode } from "@/store/guest";
 
 export type UserRoom = {
   id: string;
@@ -67,6 +68,19 @@ export const userRoomsStore = {
     /* no-op */
   },
   add(room: Omit<UserRoom, "id" | "createdAt"> & { id?: string }) {
+    if (guestMode.isGuest()) {
+      const id = room.id ?? crypto.randomUUID();
+      const next: UserRoom = {
+        id,
+        name: room.name,
+        src: room.src,
+        originalSrc: room.originalSrc,
+        createdAt: Date.now(),
+      };
+      rooms = [next, ...rooms];
+      emit();
+      return next;
+    }
     if (!currentUserId) {
       throw new Error("Sign in required");
     }
@@ -99,6 +113,11 @@ export const userRoomsStore = {
     return next;
   },
   remove(id: string) {
+    if (guestMode.isGuest()) {
+      rooms = rooms.filter((r) => r.id !== id);
+      emit();
+      return;
+    }
     if (!currentUserId) return;
     const prev = rooms;
     rooms = rooms.filter((r) => r.id !== id);
