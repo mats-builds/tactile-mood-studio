@@ -196,6 +196,8 @@ export function RoomScene({
             flipX={override.flipX ?? false}
             zOrder={override.z ?? 0}
             locked={override.locked ?? false}
+            rotateZ={override.rotateZ ?? 0}
+            rotateY={override.rotateY ?? 0}
             editMode={editMode}
             selected={selectedId === item.id}
             onSelect={() => setSelectedId(item.id)}
