@@ -1,9 +1,11 @@
-import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
+import { Outlet, Link, createRootRoute, HeadContent, Scripts, useLocation } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 
 import appCss from "../styles.css?url";
 import { useAuth } from "@/store/auth";
 import { AuthScreen } from "@/components/AuthScreen";
 import { Toaster } from "@/components/ui/sonner";
+import { guestMode } from "@/store/guest";
 
 function NotFoundComponent() {
   return (
@@ -86,6 +88,22 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const { user, loading } = useAuth();
+  const location = useLocation();
+  const [, force] = useState(0);
+  useEffect(() => guestMode.subscribe(() => force((n) => n + 1)), []);
+  const isGuest = guestMode.isGuest();
+  const isAdminRoute = location.pathname.startsWith("/admin");
+
+  // Admin route uses its own passphrase gate — bypass user-auth gate entirely.
+  if (isAdminRoute) {
+    return (
+      <>
+        <Outlet />
+        <Toaster />
+      </>
+    );
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center text-sm text-muted-foreground">
@@ -95,7 +113,7 @@ function RootComponent() {
   }
   return (
     <>
-      {user ? <Outlet /> : <AuthScreen />}
+      {user || isGuest ? <Outlet /> : <AuthScreen />}
       <Toaster />
     </>
   );
