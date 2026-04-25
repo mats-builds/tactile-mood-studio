@@ -580,13 +580,18 @@ async function tryFirecrawlJson(url: string, apiKey: string) {
 async function tryFirecrawlHtml(url: string, apiKey: string) {
   const firecrawl = new Firecrawl({ apiKey });
   try {
+    // rawHtml preserves inline styles (e.g. background-color on .paint-page)
+    // which the cleaned `html` format strips out.
     const result = await firecrawl.scrape(url, {
-      formats: ["html", "markdown"],
+      formats: ["rawHtml", "html"],
     });
+    const raw =
+      (result as { rawHtml?: string }).rawHtml ??
+      (result as { data?: { rawHtml?: string } }).data?.rawHtml;
     const html =
       (result as { html?: string }).html ??
       (result as { data?: { html?: string } }).data?.html;
-    return typeof html === "string" ? html : null;
+    return (typeof raw === "string" && raw) || (typeof html === "string" ? html : null);
   } catch (err) {
     console.warn("firecrawl html scrape failed", err);
     return null;
@@ -601,18 +606,31 @@ export const scrapeProduct = createServerFn({ method: "POST" })
 
     // ---- Farrow & Ball paint colour fast-path ----
     if (isFarrowBallUrl(sourceUrl)) {
-      let page = await fetchPage(sourceUrl);
-      if ((!page || !page.html) && apiKey) {
-        const fcHtml = await tryFirecrawlHtml(sourceUrl, apiKey);
-        if (fcHtml) page = { html: fcHtml, finalUrl: sourceUrl };
-      }
-      if (page?.html) {
-        const paint = extractFarrowBallPaint(page.html, page.finalUrl);
+      // Try both direct fetch and Firecrawl rawHtml in parallel — whichever
+      // contains the .paint-page inline-style swatch wins.
+      const [direct, fcHtml] = await Promise.all([
+        fetchPage(sourceUrl),
+        apiKey ? tryFirecrawlHtml(sourceUrl, apiKey) : Promise.resolve(null),
+      ]);
+      const candidates: Array<{ html: string; finalUrl: string; source: string }> = [];
+      if (direct?.html) candidates.push({ html: direct.html, finalUrl: direct.finalUrl, source: "direct" });
+      if (fcHtml) candidates.push({ html: fcHtml, finalUrl: sourceUrl, source: "firecrawl" });
+
+      // Score: prefer candidates that actually contain "paint-page".
+      candidates.sort((a, b) => {
+        const aHas = /paint-page/i.test(a.html) ? 1 : 0;
+        const bHas = /paint-page/i.test(b.html) ? 1 : 0;
+        return bHas - aHas;
+      });
+
+      for (const cand of candidates) {
+        const paint = extractFarrowBallPaint(cand.html, cand.finalUrl);
         if (paint) {
+          console.log("[farrow-ball] using source", cand.source);
           const swatch = paintSwatchSvgDataUrl(paint.hex, paint.name, paint.number);
           const fullName = paint.number ? `${paint.name} · No. ${paint.number}` : paint.name;
           return {
-            sourceUrl: page.finalUrl,
+            sourceUrl: cand.finalUrl,
             name: fullName,
             maker: "Farrow & Ball",
             price: paint.hex,
