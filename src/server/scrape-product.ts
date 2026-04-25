@@ -699,9 +699,28 @@ export const scrapeProduct = createServerFn({ method: "POST" })
     })();
 
     const name =
-      str(fcJson.name) ?? str(firstLd?.name) ?? str(meta.title);
+      str(firstLd?.name) ?? str(fcJson.name) ?? str(meta.title);
     const maker =
-      str(fcJson.maker) ?? str(firstLd?.brand) ?? str(meta.site) ?? hostname;
+      str(firstLd?.brand) ?? str(fcJson.maker) ?? str(meta.site) ?? hostname;
+    let cleanedName = name;
+    if (cleanedName && maker) {
+      // Strip the brand from the start/end of the name when sites concatenate
+      // them in og:title (e.g. "Meridiani | Belmondo Sofa" or
+      // "Belmondo Sofa - Meridiani"). Never let the bare brand become the name.
+      const m = maker.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      cleanedName = cleanedName
+        .replace(new RegExp(`^${m}\\s*[\\-–—|·:]\\s*`, "i"), "")
+        .replace(new RegExp(`\\s*[\\-–—|·:]\\s*${m}\\s*$`, "i"), "")
+        .trim();
+      if (cleanedName.toLowerCase() === maker.toLowerCase()) {
+        // Title is just the brand — fall back to JSON-LD name or meta title.
+        const ldName = str(firstLd?.name);
+        if (ldName && ldName.toLowerCase() !== maker.toLowerCase()) {
+          cleanedName = ldName;
+        }
+      }
+    }
+
     const description =
       str(fcJson.description) ?? str(firstLd?.description) ?? str(meta.description);
     const price = str(fcJson.price) ?? str(firstLd?.price);
@@ -722,12 +741,12 @@ export const scrapeProduct = createServerFn({ method: "POST" })
 
     const showcaseImage = allImages[0];
 
-    if (!name && !showcaseImage) {
+    if (!cleanedName && !showcaseImage) {
       throw new Error(
         "Couldn't read that page. It may require login, block scrapers, or not be a product page. Try a different URL.",
       );
     }
-    if (!name) {
+    if (!cleanedName) {
       throw new Error(
         "Found images but no product name on that page. Try the main product page URL.",
       );
@@ -742,7 +761,7 @@ export const scrapeProduct = createServerFn({ method: "POST" })
 
     return {
       sourceUrl: finalUrl,
-      name,
+      name: cleanedName,
       maker,
       price,
       description,

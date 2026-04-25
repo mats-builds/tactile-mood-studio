@@ -213,11 +213,8 @@ export function AddWithUrlDialog({
                   </div>
                 </div>
               )}
-              <div>
-                <div className="mb-2">
-                  <span className="mb-1 block text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
-                    Section
-                  </span>
+              <div className="space-y-3">
+                <Field label="Section">
                   <select
                     value={draft.category}
                     onChange={(e) =>
@@ -231,19 +228,40 @@ export function AddWithUrlDialog({
                       </option>
                     ))}
                   </select>
-                </div>
-                <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
-                  {draft.maker}
-                </p>
-                <h3 className="mt-1 font-serif text-xl text-ink">{draft.name}</h3>
-                <p className="mt-1 text-sm text-rust">{draft.price}</p>
-                {draft.description && (
-                  <p className="mt-2 line-clamp-3 text-xs leading-relaxed text-muted-foreground">
-                    {draft.description}
-                  </p>
-                )}
+                </Field>
+                <Field label="Brand">
+                  <input
+                    value={draft.maker}
+                    onChange={(e) => setDraft({ ...draft, maker: e.target.value })}
+                    className="w-full rounded-xl border border-border bg-card px-3 py-2 text-sm text-ink focus:border-ink focus:outline-none"
+                  />
+                </Field>
+                <Field label="Name">
+                  <input
+                    value={draft.name}
+                    onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+                    className="w-full rounded-xl border border-border bg-card px-3 py-2 font-serif text-base text-ink focus:border-ink focus:outline-none"
+                  />
+                </Field>
+                <Field label="Price">
+                  <input
+                    value={draft.price}
+                    onChange={(e) => setDraft({ ...draft, price: e.target.value })}
+                    className="w-full rounded-xl border border-border bg-card px-3 py-2 text-sm text-rust focus:border-ink focus:outline-none"
+                  />
+                </Field>
+                <Field label="Description">
+                  <textarea
+                    value={draft.description ?? ""}
+                    onChange={(e) =>
+                      setDraft({ ...draft, description: e.target.value || undefined })
+                    }
+                    rows={3}
+                    className="w-full resize-none rounded-xl border border-border bg-card px-3 py-2 text-xs leading-relaxed text-muted-foreground focus:border-ink focus:text-ink focus:outline-none"
+                  />
+                </Field>
                 {draft.dims && (
-                  <p className="mt-2 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                  <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
                     {draft.dims.w}cm × {draft.dims.h}cm
                     {draft.dims.d ? ` × ${draft.dims.d}cm` : ""}
                   </p>
@@ -268,5 +286,16 @@ export function AddWithUrlDialog({
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="block">
+      <span className="mb-1 block text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+        {label}
+      </span>
+      {children}
+    </label>
   );
 }
