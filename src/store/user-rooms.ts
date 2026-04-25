@@ -1,65 +1,76 @@
 import { useEffect, useState } from "react";
-
-/**
- * Locally-stored, AI-emptied room photos that the user can pick as a backdrop
- * in the moodboard composer. Persisted to localStorage as data URLs so they
- * survive reloads without a server round-trip.
- */
-
-const KEY = "moods.user-rooms.v1";
+import { supabase } from "@/integrations/supabase/client";
 
 export type UserRoom = {
-  /** scene id, prefixed with "user:" so it can't collide with built-ins */
   id: string;
   name: string;
-  /** data URL of the AI-emptied room */
   src: string;
-  /** data URL of the original photo, kept for reference */
   originalSrc?: string;
   createdAt: number;
 };
 
 type Listener = () => void;
 const listeners = new Set<Listener>();
-
 let rooms: UserRoom[] = [];
-let hydrated = false;
-
-function load() {
-  if (typeof window === "undefined") return;
-  try {
-    const raw = window.localStorage.getItem(KEY);
-    if (raw) rooms = JSON.parse(raw) as UserRoom[];
-  } catch {
-    /* ignore */
-  }
-}
-
-function persist() {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(KEY, JSON.stringify(rooms));
-  } catch (e) {
-    console.warn("Couldn't persist user rooms (storage full?)", e);
-  }
-}
-
-function hydrate() {
-  if (hydrated || typeof window === "undefined") return;
-  hydrated = true;
-  load();
-}
+let currentUserId: string | null = null;
 
 function emit() {
   listeners.forEach((l) => l());
 }
 
+function rowToRoom(r: any): UserRoom {
+  return {
+    id: r.id,
+    name: r.name,
+    src: r.background_image ?? "",
+    originalSrc: (r.scene && r.scene.originalSrc) || undefined,
+    createdAt: new Date(r.created_at).getTime(),
+  };
+}
+
+async function loadFromServer(uid: string) {
+  const { data, error } = await supabase
+    .from("rooms")
+    .select("*")
+    .eq("user_id", uid)
+    .order("created_at", { ascending: false });
+  if (error) {
+    console.error("rooms load failed", error);
+    return;
+  }
+  rooms = (data ?? []).map(rowToRoom);
+  emit();
+}
+
+if (typeof window !== "undefined") {
+  supabase.auth.getSession().then(({ data }) => {
+    const uid = data.session?.user?.id ?? null;
+    if (uid) {
+      currentUserId = uid;
+      loadFromServer(uid);
+    }
+  });
+  supabase.auth.onAuthStateChange((_e, session) => {
+    const uid = session?.user?.id ?? null;
+    if (uid !== currentUserId) {
+      currentUserId = uid;
+      rooms = [];
+      emit();
+      if (uid) loadFromServer(uid);
+    }
+  });
+}
+
 export const userRoomsStore = {
   list: () => rooms,
-  hydrate,
+  hydrate: () => {
+    /* no-op */
+  },
   add(room: Omit<UserRoom, "id" | "createdAt"> & { id?: string }) {
-    hydrate();
-    const id = room.id ?? `user:${crypto.randomUUID().slice(0, 8)}`;
+    if (!currentUserId) {
+      throw new Error("Sign in required");
+    }
+    const id = room.id ?? `user-${crypto.randomUUID()}`;
     const next: UserRoom = {
       id,
       name: room.name,
@@ -68,15 +79,41 @@ export const userRoomsStore = {
       createdAt: Date.now(),
     };
     rooms = [next, ...rooms];
-    persist();
     emit();
+    supabase
+      .from("rooms")
+      .upsert({
+        id,
+        user_id: currentUserId,
+        name: next.name,
+        background_image: next.src,
+        scene: { originalSrc: next.originalSrc ?? null },
+      })
+      .then(({ error }) => {
+        if (error) {
+          console.error("room save failed", error);
+          rooms = rooms.filter((r) => r.id !== id);
+          emit();
+        }
+      });
     return next;
   },
   remove(id: string) {
-    hydrate();
+    if (!currentUserId) return;
+    const prev = rooms;
     rooms = rooms.filter((r) => r.id !== id);
-    persist();
     emit();
+    supabase
+      .from("rooms")
+      .delete()
+      .eq("id", id)
+      .eq("user_id", currentUserId)
+      .then(({ error }) => {
+        if (error) {
+          rooms = prev;
+          emit();
+        }
+      });
   },
   subscribe(l: Listener) {
     listeners.add(l);
@@ -87,7 +124,6 @@ export const userRoomsStore = {
 export function useUserRooms() {
   const [, force] = useState(0);
   useEffect(() => {
-    userRoomsStore.hydrate();
     force((n) => n + 1);
     const unsub = userRoomsStore.subscribe(() => force((n) => n + 1));
     return () => {

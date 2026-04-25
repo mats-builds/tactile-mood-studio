@@ -14,6 +14,60 @@ export type Database = {
   }
   public: {
     Tables: {
+      furniture: {
+        Row: {
+          category: string | null
+          created_at: string
+          currency: string | null
+          description: string | null
+          gallery: Json | null
+          id: string
+          maker: string | null
+          name: string
+          original_src: string | null
+          price: number | null
+          source_url: string | null
+          specs: Json | null
+          src: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          currency?: string | null
+          description?: string | null
+          gallery?: Json | null
+          id?: string
+          maker?: string | null
+          name: string
+          original_src?: string | null
+          price?: number | null
+          source_url?: string | null
+          specs?: Json | null
+          src?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          currency?: string | null
+          description?: string | null
+          gallery?: Json | null
+          id?: string
+          maker?: string | null
+          name?: string
+          original_src?: string | null
+          price?: number | null
+          source_url?: string | null
+          specs?: Json | null
+          src?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       import_jobs: {
         Row: {
           category_url: string
@@ -113,6 +167,30 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       room_jobs: {
         Row: {
           created_at: string
@@ -140,6 +218,36 @@ export type Database = {
           output_image?: string | null
           status?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      rooms: {
+        Row: {
+          background_image: string | null
+          created_at: string
+          id: string
+          name: string
+          scene: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          background_image?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          scene?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          background_image?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          scene?: Json
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }

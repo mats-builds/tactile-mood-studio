@@ -1,103 +1,180 @@
 import { useEffect, useState } from "react";
 import type { Product } from "@/data/catalog";
+import { supabase } from "@/integrations/supabase/client";
 
-const KEY = "moods.userProducts.v1";
 type Listener = () => void;
 const listeners = new Set<Listener>();
 let products: Product[] = [];
-let hydrated = false;
+let currentUserId: string | null = null;
 let lastError: string | null = null;
+let loaded = false;
 
-function load() {
-  if (typeof window === "undefined") return;
-  try {
-    const raw = window.localStorage.getItem(KEY);
-    if (raw) products = JSON.parse(raw) as Product[];
-  } catch {
-    /* ignore */
-  }
-}
-
-function hydrate() {
-  if (hydrated || typeof window === "undefined") return;
-  hydrated = true;
-  load();
-}
-
-function persist() {
-  if (typeof window === "undefined") return true;
-  try {
-    window.localStorage.setItem(KEY, JSON.stringify(products));
-    lastError = null;
-    return true;
-  } catch (err) {
-    lastError =
-      err instanceof Error
-        ? err.name === "QuotaExceededError" || /quota/i.test(err.message)
-          ? "Browser storage is full — your additions can't be saved. Remove some pieces or images and try again."
-          : err.message
-        : "Could not save your additions.";
-    console.error("user-products persist failed", err);
-    return false;
-  }
-}
 function emit() {
   listeners.forEach((l) => l());
 }
 
+function rowToProduct(r: any): Product {
+  return {
+    id: r.id,
+    name: r.name,
+    maker: r.maker ?? "",
+    price: r.price != null ? `${r.currency ?? "EUR"} ${r.price}` : "",
+    category: (r.category as Product["category"]) ?? "Decor",
+    src: r.src ?? "",
+    colors: [],
+    role: "ground",
+    description: r.description ?? undefined,
+    gallery: Array.isArray(r.gallery) ? r.gallery : [],
+    sourceUrl: r.source_url ?? undefined,
+    details: r.specs && typeof r.specs === "object" ? r.specs : undefined,
+  };
+}
+
+function productToRow(p: Product, userId: string) {
+  // Try to extract a numeric price if present in the formatted string.
+  const priceNum = Number((p.price ?? "").replace(/[^\d.]/g, "")) || null;
+  return {
+    id: p.id,
+    user_id: userId,
+    name: p.name,
+    maker: p.maker || null,
+    category: p.category || null,
+    price: priceNum,
+    currency: "EUR",
+    source_url: p.sourceUrl || null,
+    src: p.src || null,
+    gallery: p.gallery ?? [],
+    description: p.description || null,
+    specs: p.details ?? {},
+  };
+}
+
+async function loadFromServer(userId: string) {
+  const { data, error } = await supabase
+    .from("furniture")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+  if (error) {
+    lastError = error.message;
+    console.error("furniture load failed", error);
+    return;
+  }
+  products = (data ?? []).map(rowToProduct);
+  loaded = true;
+  emit();
+}
+
+// Re-sync whenever auth state changes
+if (typeof window !== "undefined") {
+  supabase.auth.getSession().then(({ data }) => {
+    const uid = data.session?.user?.id ?? null;
+    if (uid) {
+      currentUserId = uid;
+      loadFromServer(uid);
+    }
+  });
+  supabase.auth.onAuthStateChange((_e, session) => {
+    const uid = session?.user?.id ?? null;
+    if (uid !== currentUserId) {
+      currentUserId = uid;
+      products = [];
+      loaded = false;
+      emit();
+      if (uid) loadFromServer(uid);
+    }
+  });
+}
+
 export const userProductsStore = {
-  hydrate,
+  hydrate: () => {
+    /* no-op (kept for API compat) */
+  },
   list: () => products,
+  isLoaded: () => loaded,
   getError: () => lastError,
   clearError: () => {
     lastError = null;
     emit();
   },
   add(p: Product) {
-    hydrate();
-    // de-dupe by id
+    if (!currentUserId) return false;
     products = [p, ...products.filter((x) => x.id !== p.id)];
-    const ok = persist();
-    if (!ok) {
-      // Roll back so UI matches storage.
-      products = products.filter((x) => x.id !== p.id);
-    }
     emit();
-    return ok;
+    supabase
+      .from("furniture")
+      .upsert(productToRow(p, currentUserId))
+      .then(({ error }) => {
+        if (error) {
+          lastError = error.message;
+          console.error("furniture add failed", error);
+          // rollback
+          products = products.filter((x) => x.id !== p.id);
+          emit();
+        }
+      });
+    return true;
   },
   remove(id: string) {
-    hydrate();
+    if (!currentUserId) return;
+    const prev = products;
     products = products.filter((p) => p.id !== id);
-    persist();
     emit();
+    supabase
+      .from("furniture")
+      .delete()
+      .eq("id", id)
+      .eq("user_id", currentUserId)
+      .then(({ error }) => {
+        if (error) {
+          products = prev;
+          emit();
+        }
+      });
   },
   update(id: string, patch: Partial<Product>) {
-    hydrate();
+    if (!currentUserId) return false;
     const prev = products;
     products = products.map((p) => (p.id === id ? { ...p, ...patch } : p));
-    const ok = persist();
-    if (!ok) products = prev;
     emit();
-    return ok;
+    const updated = products.find((p) => p.id === id);
+    if (updated) {
+      supabase
+        .from("furniture")
+        .upsert(productToRow(updated, currentUserId))
+        .then(({ error }) => {
+          if (error) {
+            products = prev;
+            emit();
+          }
+        });
+    }
+    return true;
   },
   removeImage(id: string, imageUrl: string) {
-    hydrate();
+    const prev = products;
     products = products.map((p) => {
       if (p.id !== id) return p;
       const gallery = (p.gallery ?? []).filter((g) => g !== imageUrl);
-      // If removing the main showcase, promote the first gallery image.
       if (p.src === imageUrl) {
         const next = gallery[0];
-        return {
-          ...p,
-          src: next ?? "",
-          gallery: next ? gallery.slice(1) : [],
-        };
+        return { ...p, src: next ?? "", gallery: next ? gallery.slice(1) : [] };
       }
       return { ...p, gallery };
     });
-    persist();
     emit();
+    const updated = products.find((p) => p.id === id);
+    if (updated && currentUserId) {
+      supabase
+        .from("furniture")
+        .upsert(productToRow(updated, currentUserId))
+        .then(({ error }) => {
+          if (error) {
+            products = prev;
+            emit();
+          }
+        });
+    }
   },
   subscribe(l: Listener) {
     listeners.add(l);
@@ -110,7 +187,6 @@ export const userProductsStore = {
 export function useUserProducts() {
   const [, force] = useState(0);
   useEffect(() => {
-    userProductsStore.hydrate();
     force((n) => n + 1);
     const unsub = userProductsStore.subscribe(() => force((n) => n + 1));
     return () => {
