@@ -148,8 +148,10 @@ function extractFarrowBallPaint(html: string, url: string): {
     }
   }
 
-  // Number: e.g. "No. 267"
-  const numMatch = html.match(/No\.?\s*(\d{1,4})/i);
+  // Number: e.g. "No. 267" or "No. CB5" — F&B uses both numeric and
+  // alphanumeric reference codes. Accept letters + digits, but require at
+  // least one digit so we don't catch words like "No. None".
+  const numMatch = html.match(/No\.?\s*([A-Z]{0,3}\d{1,4}[A-Z]?)\b/);
   const number = numMatch ? numMatch[1] : undefined;
 
   // Hex extraction — Farrow & Ball pages render the actual paint colour as the
