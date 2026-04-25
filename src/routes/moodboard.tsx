@@ -133,7 +133,7 @@ function MoodboardPage() {
     <main className="min-h-screen bg-background pb-20 text-foreground">
       {/* Top bar */}
       <header className="sticky top-0 z-30 border-b border-border/60 bg-background/85 backdrop-blur-md">
-        <div className="mx-auto flex max-w-[1200px] items-center justify-between px-6 py-5 md:px-10">
+        <div className="mx-auto flex max-w-[1500px] items-center justify-between px-6 py-5 md:px-10">
           <Link
             to="/"
             className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-foreground/70 hover:text-foreground"
@@ -150,7 +150,7 @@ function MoodboardPage() {
       </header>
 
       {/* Title */}
-      <section className="mx-auto max-w-[1200px] px-6 pb-6 pt-10 md:px-10 md:pt-14">
+      <section className="mx-auto max-w-[1500px] px-6 pb-6 pt-10 md:px-10 md:pt-14">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="text-xs uppercase tracking-display text-muted-foreground">
@@ -184,7 +184,7 @@ function MoodboardPage() {
       />
 
       {/* Composed Room Scene */}
-      <section className="mx-auto max-w-[1200px] px-6 md:px-10">
+      <section className="mx-auto max-w-[1500px] px-6 md:px-10">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <p className="text-[11px] uppercase tracking-display text-muted-foreground">
             {editMode
@@ -243,7 +243,7 @@ function MoodboardPage() {
       </section>
 
       {/* Scene picker */}
-      <section className="mx-auto mt-8 max-w-[1200px] px-6 md:px-10">
+      <section className="mx-auto mt-8 max-w-[1500px] px-6 md:px-10">
         <div className="rounded-3xl bg-card p-6 shadow-[var(--shadow-soft)] md:p-8">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
@@ -333,7 +333,7 @@ function MoodboardPage() {
       </section>
 
       {/* Palette picker */}
-      <section className="mx-auto mt-8 max-w-[1200px] px-6 md:px-10">
+      <section className="mx-auto mt-8 max-w-[1500px] px-6 md:px-10">
         <div className="rounded-3xl bg-card p-6 shadow-[var(--shadow-soft)] md:p-8">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
@@ -391,7 +391,7 @@ function MoodboardPage() {
       </section>
 
       {/* Itemized list */}
-      <section className="mx-auto mt-12 max-w-[1200px] px-6 md:px-10">
+      <section className="mx-auto mt-12 max-w-[1500px] px-6 md:px-10">
         <p className="text-[11px] uppercase tracking-display text-muted-foreground">
           On this board
         </p>

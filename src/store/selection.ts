@@ -17,10 +17,6 @@ export type LayoutOverride = {
   z?: number;
   /** locked in place: not draggable/selectable, rendered behind unlocked items */
   locked?: boolean;
-  /** in-plane tilt (z-axis) in degrees, e.g. -45..45 */
-  rotateZ?: number;
-  /** 3D yaw (y-axis) in degrees for a perspective turn, e.g. -60..60 */
-  rotateY?: number;
 };
 
 export type LayoutMap = Record<string, LayoutOverride>;
