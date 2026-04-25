@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { Product } from "@/data/catalog";
 import { supabase } from "@/integrations/supabase/client";
 import { guestMode } from "@/store/guest";
+import { demoCatalog } from "@/data/demo-catalog";
 
 type Listener = () => void;
 const listeners = new Set<Listener>();
@@ -68,15 +69,36 @@ async function loadFromServer(userId: string) {
 
 // Re-sync whenever auth state changes
 if (typeof window !== "undefined") {
+  // Seed demo catalog for guests on load
+  if (guestMode.isGuest()) {
+    products = [...demoCatalog];
+    loaded = true;
+  }
+  guestMode.subscribe(() => {
+    if (guestMode.isGuest()) {
+      // Seed if empty (e.g., user just clicked Try as guest)
+      if (products.length === 0) {
+        products = [...demoCatalog];
+        loaded = true;
+        emit();
+      }
+    } else {
+      // Exited demo — clear in-memory items
+      products = [];
+      loaded = false;
+      emit();
+    }
+  });
   supabase.auth.getSession().then(({ data }) => {
     const uid = data.session?.user?.id ?? null;
-    if (uid) {
+    if (uid && !guestMode.isGuest()) {
       currentUserId = uid;
       loadFromServer(uid);
     }
   });
   supabase.auth.onAuthStateChange((_e, session) => {
     const uid = session?.user?.id ?? null;
+    if (guestMode.isGuest()) return;
     if (uid !== currentUserId) {
       currentUserId = uid;
       products = [];
