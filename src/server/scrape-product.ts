@@ -84,6 +84,104 @@ const META_OG_SITE_RE =
 const BACKGROUND_REMOVAL_CREDITS_ERROR =
   "Background removal is unavailable right now because the image credits are exhausted.";
 
+// ---------- Paint colours (Farrow & Ball) ----------
+
+function isFarrowBallUrl(url: string): boolean {
+  try {
+    const u = new URL(url);
+    return /(^|\.)farrow-ball\.com$/i.test(u.hostname) && /\/paint\//i.test(u.pathname);
+  } catch {
+    return false;
+  }
+}
+
+function rgbToHex(r: number, g: number, b: number): string {
+  const h = (n: number) => Math.max(0, Math.min(255, Math.round(n))).toString(16).padStart(2, "0");
+  return `#${h(r)}${h(g)}${h(b)}`.toUpperCase();
+}
+
+function isLightColor(hex: string): boolean {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex);
+  if (!m) return false;
+  const n = parseInt(m[1], 16);
+  const r = (n >> 16) & 0xff;
+  const g = (n >> 8) & 0xff;
+  const b = n & 0xff;
+  // perceived luminance
+  return 0.299 * r + 0.587 * g + 0.114 * b > 165;
+}
+
+function paintSwatchSvgDataUrl(hex: string, name: string, number?: string): string {
+  const ink = isLightColor(hex) ? "#1a1a1a" : "#ffffff";
+  const muted = isLightColor(hex) ? "rgba(0,0,0,0.55)" : "rgba(255,255,255,0.7)";
+  const safeName = name.replace(/[<>&]/g, "");
+  const safeNum = (number ?? "").replace(/[<>&]/g, "");
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600">
+  <rect width="600" height="600" fill="${hex}"/>
+  <rect x="20" y="20" width="560" height="560" fill="none" stroke="${muted}" stroke-width="1"/>
+  <text x="40" y="520" font-family="Georgia, 'Times New Roman', serif" font-size="44" fill="${ink}">${safeName}</text>
+  ${safeNum ? `<text x="40" y="560" font-family="Inter, system-ui, sans-serif" font-size="22" letter-spacing="2" fill="${muted}">No. ${safeNum} · FARROW &amp; BALL</text>` : `<text x="40" y="560" font-family="Inter, system-ui, sans-serif" font-size="22" letter-spacing="2" fill="${muted}">FARROW &amp; BALL</text>`}
+  <text x="560" y="80" text-anchor="end" font-family="Inter, system-ui, sans-serif" font-size="20" letter-spacing="3" fill="${muted}">${hex}</text>
+</svg>`;
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+}
+
+/** Extract paint colour info from a Farrow & Ball product page HTML. */
+function extractFarrowBallPaint(html: string, url: string): {
+  name: string;
+  number?: string;
+  hex: string;
+  description?: string;
+} | null {
+  // Name: try og:title, then <title>, then derive from URL slug.
+  const meta = metaFromHtml(html);
+  let name = meta.title?.split("|")[0].split("·")[0].split("—")[0].trim();
+  if (name) name = name.replace(/\s*[-–—]\s*Farrow.*/i, "").trim();
+  if (!name) {
+    try {
+      const slug = new URL(url).pathname.split("/").filter(Boolean).pop() ?? "";
+      name = slug
+        .replace(/[-_]+/g, " ")
+        .replace(/\b\w/g, (c) => c.toUpperCase());
+    } catch {
+      /* ignore */
+    }
+  }
+
+  // Number: e.g. "No. 267"
+  const numMatch = html.match(/No\.?\s*(\d{1,4})/i);
+  const number = numMatch ? numMatch[1] : undefined;
+
+  // Hex: prefer the first rgb(...) that's NOT pure white/black/grey-bg.
+  let hex: string | undefined;
+  const rgbRe = /rgb\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)/gi;
+  for (const m of html.matchAll(rgbRe)) {
+    const r = Number(m[1]), g = Number(m[2]), b = Number(m[3]);
+    // skip pure white / pure black
+    if ((r === 255 && g === 255 && b === 255) || (r === 0 && g === 0 && b === 0)) continue;
+    hex = rgbToHex(r, g, b);
+    break;
+  }
+  // Fallback: first non-trivial #hex in inline styles
+  if (!hex) {
+    const hexRe = /#([0-9a-fA-F]{6})/g;
+    for (const m of html.matchAll(hexRe)) {
+      const v = m[1].toUpperCase();
+      if (v === "FFFFFF" || v === "000000" || v === "010101") continue;
+      hex = `#${v}`;
+      break;
+    }
+  }
+
+  if (!hex || !name) return null;
+  return {
+    name,
+    number,
+    hex,
+    description: meta.description,
+  };
+}
+
 function normalizeUrl(raw: string): string {
   let url = raw.trim();
   if (!url) throw new Error("Please paste a product URL.");
