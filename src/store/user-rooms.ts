@@ -70,7 +70,7 @@ export const userRoomsStore = {
     if (!currentUserId) {
       throw new Error("Sign in required");
     }
-    const id = room.id ?? `user-${crypto.randomUUID()}`;
+    const id = room.id ?? crypto.randomUUID();
     const next: UserRoom = {
       id,
       name: room.name,
