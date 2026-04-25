@@ -542,6 +542,38 @@ export const scrapeProduct = createServerFn({ method: "POST" })
     const sourceUrl = normalizeUrl(data.url);
     const apiKey = process.env.FIRECRAWL_API_KEY;
 
+    // ---- Farrow & Ball paint colour fast-path ----
+    if (isFarrowBallUrl(sourceUrl)) {
+      let page = await fetchPage(sourceUrl);
+      if ((!page || !page.html) && apiKey) {
+        const fcHtml = await tryFirecrawlHtml(sourceUrl, apiKey);
+        if (fcHtml) page = { html: fcHtml, finalUrl: sourceUrl };
+      }
+      if (page?.html) {
+        const paint = extractFarrowBallPaint(page.html, page.finalUrl);
+        if (paint) {
+          const swatch = paintSwatchSvgDataUrl(paint.hex, paint.name, paint.number);
+          const fullName = paint.number ? `${paint.name} · No. ${paint.number}` : paint.name;
+          return {
+            sourceUrl: page.finalUrl,
+            name: fullName,
+            maker: "Farrow & Ball",
+            price: paint.hex,
+            description:
+              paint.description ??
+              `Farrow & Ball paint colour ${paint.name}${paint.number ? ` (No. ${paint.number})` : ""} — ${paint.hex}.`,
+            category: "Decor",
+            role: "wall",
+            width_cm: 60,
+            height_cm: 60,
+            image_url: swatch,
+            gallery: undefined,
+          };
+        }
+      }
+      // If extraction failed, fall through to generic flow below.
+    }
+
     // Run direct fetch and Firecrawl JSON in parallel — direct fetch gives us
     // og:image / JSON-LD even if Firecrawl times out or extracts nothing.
     const [directPage, firecrawlJson] = await Promise.all([
