@@ -152,19 +152,74 @@ function extractFarrowBallPaint(html: string, url: string): {
   const numMatch = html.match(/No\.?\s*(\d{1,4})/i);
   const number = numMatch ? numMatch[1] : undefined;
 
-  // Hex: prefer the first rgb(...) that's NOT pure white/black/grey-bg.
+  // Hex extraction — Farrow & Ball pages render the actual paint colour as the
+  // background-color of an element with class "paint-page". That is the
+  // authoritative source. We try in priority order:
+  //   1. background-color on the .paint-page element (rgb or hex)
+  //   2. any background-color on a "paint-*" / "product-top" element
+  //   3. first non-trivial rgb() in the document
+  //   4. first non-trivial #hex in inline styles
+  const isMeaningfulRgb = (r: number, g: number, b: number) =>
+    !(r === 255 && g === 255 && b === 255) &&
+    !(r === 0 && g === 0 && b === 0) &&
+    !(r === 1 && g === 1 && b === 1);
+
+  const tryParseColor = (raw: string): string | undefined => {
+    const rgbM = /rgba?\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})/i.exec(raw);
+    if (rgbM) {
+      const r = Number(rgbM[1]), g = Number(rgbM[2]), b = Number(rgbM[3]);
+      if (isMeaningfulRgb(r, g, b)) return rgbToHex(r, g, b);
+    }
+    const hexM = /#([0-9a-fA-F]{6})\b/.exec(raw);
+    if (hexM) {
+      const v = hexM[1].toUpperCase();
+      if (v !== "FFFFFF" && v !== "000000" && v !== "010101") return `#${v}`;
+    }
+    return undefined;
+  };
+
   let hex: string | undefined;
-  const rgbRe = /rgb\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)/gi;
-  for (const m of html.matchAll(rgbRe)) {
-    const r = Number(m[1]), g = Number(m[2]), b = Number(m[3]);
-    // skip pure white / pure black
-    if ((r === 255 && g === 255 && b === 255) || (r === 0 && g === 0 && b === 0)) continue;
-    hex = rgbToHex(r, g, b);
-    break;
+
+  // 1) Find any element whose class includes "paint-page" and read its style.
+  //    Be tolerant of attribute order: scan opening tags that mention paint-page.
+  const tagRe = /<[a-z][^>]*\bclass=["'][^"']*\bpaint-page\b[^"']*["'][^>]*>/gi;
+  for (const m of html.matchAll(tagRe)) {
+    const tag = m[0];
+    const styleM = /style=["']([^"']+)["']/i.exec(tag);
+    if (!styleM) continue;
+    const bgM = /background(?:-color)?\s*:\s*([^;"']+)/i.exec(styleM[1]);
+    if (!bgM) continue;
+    const c = tryParseColor(bgM[1]);
+    if (c) { hex = c; break; }
   }
-  // Fallback: first non-trivial #hex in inline styles
+
+  // 2) Other likely product-hero containers as fallback.
   if (!hex) {
-    const hexRe = /#([0-9a-fA-F]{6})/g;
+    const heroRe = /<[a-z][^>]*\bclass=["'][^"']*\b(?:product-top-info|product-info-main|paint-color|color-swatch-main)\b[^"']*["'][^>]*>/gi;
+    for (const m of html.matchAll(heroRe)) {
+      const styleM = /style=["']([^"']+)["']/i.exec(m[0]);
+      if (!styleM) continue;
+      const bgM = /background(?:-color)?\s*:\s*([^;"']+)/i.exec(styleM[1]);
+      if (!bgM) continue;
+      const c = tryParseColor(bgM[1]);
+      if (c) { hex = c; break; }
+    }
+  }
+
+  // 3) First non-trivial rgb(...) in the whole document.
+  if (!hex) {
+    const rgbRe = /rgb\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)/gi;
+    for (const m of html.matchAll(rgbRe)) {
+      const r = Number(m[1]), g = Number(m[2]), b = Number(m[3]);
+      if (!isMeaningfulRgb(r, g, b)) continue;
+      hex = rgbToHex(r, g, b);
+      break;
+    }
+  }
+
+  // 4) Finally fall back to first non-trivial #hex.
+  if (!hex) {
+    const hexRe = /#([0-9a-fA-F]{6})\b/g;
     for (const m of html.matchAll(hexRe)) {
       const v = m[1].toUpperCase();
       if (v === "FFFFFF" || v === "000000" || v === "010101") continue;
@@ -172,6 +227,8 @@ function extractFarrowBallPaint(html: string, url: string): {
       break;
     }
   }
+
+  console.log("[farrow-ball] extracted", { name, number, hex, urlHost: (() => { try { return new URL(url).host; } catch { return ""; } })() });
 
   if (!hex || !name) return null;
   return {
