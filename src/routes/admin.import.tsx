@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Download, Loader2, Sparkles, AlertCircle, CheckCircle2, Scissors, X, Plus } from "lucide-react";
+import { Download, Loader2, Sparkles, AlertCircle, CheckCircle2, Scissors, X, Plus, Upload, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { applyAlphaCutout } from "@/lib/alpha-cutout";
 import { userProductsStore } from "@/store/user-products";
@@ -51,6 +51,9 @@ function BulkImportPage() {
   const [cuttingIds, setCuttingIds] = useState<Set<string>>(new Set());
   const [savedCount, setSavedCount] = useState(0);
   const [detail, setDetail] = useState<CatalogProduct | null>(null);
+  const [csvBusy, setCsvBusy] = useState(false);
+  const [csvSummary, setCsvSummary] = useState<string | null>(null);
+  const csvInputRef = useRef<HTMLInputElement>(null);
 
   // Load all pending products (from any job) on mount so the user can review
   // anything imported in previous sessions.
@@ -281,6 +284,146 @@ function BulkImportPage() {
     return Math.round((job.processed / job.total) * 100);
   }, [job]);
 
+  // ---- CSV import ----
+  const parseCsv = (text: string): Record<string, string>[] => {
+    // Minimal RFC4180-ish parser supporting quoted fields, commas, and escaped "" quotes.
+    const rows: string[][] = [];
+    let row: string[] = [];
+    let cur = "";
+    let inQuotes = false;
+    for (let i = 0; i < text.length; i++) {
+      const c = text[i];
+      if (inQuotes) {
+        if (c === '"') {
+          if (text[i + 1] === '"') {
+            cur += '"';
+            i++;
+          } else {
+            inQuotes = false;
+          }
+        } else {
+          cur += c;
+        }
+      } else {
+        if (c === '"') inQuotes = true;
+        else if (c === ",") {
+          row.push(cur);
+          cur = "";
+        } else if (c === "\n" || c === "\r") {
+          if (c === "\r" && text[i + 1] === "\n") i++;
+          row.push(cur);
+          cur = "";
+          if (row.some((v) => v.length > 0)) rows.push(row);
+          row = [];
+        } else {
+          cur += c;
+        }
+      }
+    }
+    if (cur.length > 0 || row.length > 0) {
+      row.push(cur);
+      if (row.some((v) => v.length > 0)) rows.push(row);
+    }
+    if (rows.length < 2) return [];
+    const headers = rows[0].map((h) => h.trim());
+    return rows.slice(1).map((r) => {
+      const obj: Record<string, string> = {};
+      headers.forEach((h, i) => {
+        obj[h] = (r[i] ?? "").trim();
+      });
+      return obj;
+    });
+  };
+
+  const pickField = (row: Record<string, string>, candidates: string[]): string => {
+    const keys = Object.keys(row);
+    for (const c of candidates) {
+      const hit = keys.find((k) => k.toLowerCase() === c.toLowerCase());
+      if (hit && row[hit]) return row[hit];
+    }
+    return "";
+  };
+
+  const onCsvChosen = async (file: File) => {
+    setErrorText(null);
+    setCsvSummary(null);
+    setCsvBusy(true);
+    try {
+      const text = await file.text();
+      const rows = parseCsv(text);
+      if (rows.length === 0) {
+        setErrorText("That CSV looks empty. It needs a header row plus at least one product.");
+        return;
+      }
+
+      const records = rows
+        .map((r) => {
+          const name = pickField(r, ["Productnaam", "Product name", "Name", "Title"]);
+          const source_url = pickField(r, ["Product URL", "URL", "Source URL", "Link"]);
+          const image_url = pickField(r, [
+            "Productafbeelding",
+            "Product image",
+            "Image",
+            "Image URL",
+            "Photo",
+          ]);
+          const priceRaw = pickField(r, ["Prijs (EUR)", "Prijs", "Price", "Price (EUR)"]);
+          const maker = pickField(r, ["Merk", "Maker", "Brand", "Vendor"]);
+          const category = pickField(r, ["Categorie", "Category", "Type"]);
+          const description = pickField(r, [
+            "Product omschrijving",
+            "Omschrijving",
+            "Description",
+            "Beschrijving",
+          ]);
+          const price = priceRaw
+            ? Number(priceRaw.replace(/[^0-9,.-]/g, "").replace(",", "."))
+            : null;
+          return {
+            name,
+            source_url,
+            image_url: image_url || null,
+            original_image_url: image_url || null,
+            price: price != null && isFinite(price) ? price : null,
+            currency: "EUR" as const,
+            maker: maker || null,
+            category: category || null,
+            description: description || null,
+            status: "pending" as const,
+            job_id: null as string | null,
+          };
+        })
+        .filter((r) => r.name && r.source_url);
+
+      if (records.length === 0) {
+        setErrorText(
+          "Couldn't find usable rows. Make sure the CSV has at least a name column and a product URL column.",
+        );
+        return;
+      }
+
+      // Insert in chunks to stay friendly to the API.
+      const chunkSize = 50;
+      let inserted = 0;
+      for (let i = 0; i < records.length; i += chunkSize) {
+        const chunk = records.slice(i, i + chunkSize);
+        const { error } = await supabase.from("products").insert(chunk);
+        if (error) throw error;
+        inserted += chunk.length;
+      }
+
+      setCsvSummary(
+        `Imported ${inserted} of ${rows.length} rows. Review them below, then run cutout or save as-is.`,
+      );
+    } catch (e) {
+      console.error("CSV import failed", e);
+      setErrorText(e instanceof Error ? e.message : "CSV import failed");
+    } finally {
+      setCsvBusy(false);
+      if (csvInputRef.current) csvInputRef.current.value = "";
+    }
+  };
+
   return (
     <div className="space-y-10">
       <header>
@@ -343,6 +486,62 @@ function BulkImportPage() {
         {errorText && (
           <div className="mt-4 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800">
             <AlertCircle size={14} /> {errorText}
+          </div>
+        )}
+      </div>
+
+      {/* CSV upload */}
+      <div className="rounded-2xl border border-black/5 bg-white p-6 shadow-sm">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="max-w-xl">
+            <div className="text-[10px] uppercase tracking-[0.24em] text-black/50">
+              Or upload a CSV
+            </div>
+            <h2
+              className="mt-1 font-serif text-2xl"
+              style={{ fontFamily: "'Playfair Display', serif" }}
+            >
+              Bulk add from spreadsheet
+            </h2>
+            <p className="mt-2 text-xs text-black/50">
+              Expected columns:{" "}
+              <code className="rounded bg-black/5 px-1">Productnaam</code>,{" "}
+              <code className="rounded bg-black/5 px-1">Product URL</code>,{" "}
+              <code className="rounded bg-black/5 px-1">Productafbeelding</code>,{" "}
+              <code className="rounded bg-black/5 px-1">Prijs (EUR)</code>,{" "}
+              <code className="rounded bg-black/5 px-1">Product omschrijving</code>. English
+              equivalents (Name, URL, Image, Price, Description) also work.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              ref={csvInputRef}
+              type="file"
+              accept=".csv,text/csv"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) onCsvChosen(f);
+              }}
+            />
+            <button
+              onClick={() => csvInputRef.current?.click()}
+              disabled={csvBusy}
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-lg px-6 text-sm font-medium transition-opacity hover:opacity-90 disabled:opacity-50"
+              style={{ background: "#1A1A1A", color: "#F9F7F2" }}
+            >
+              {csvBusy ? (
+                <Loader2 size={14} className="animate-spin" />
+              ) : (
+                <Upload size={14} />
+              )}
+              {csvBusy ? "Importing…" : "Choose CSV file"}
+            </button>
+          </div>
+        </div>
+        {csvSummary && (
+          <div className="mt-4 flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-800">
+            <FileText size={14} /> {csvSummary}
           </div>
         )}
       </div>
