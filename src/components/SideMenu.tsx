@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Menu, Plus, Link2, BookOpen, Sparkles, Pencil, X, ArrowLeft, Crop, Loader2, LogOut } from "lucide-react";
+import { Menu, Plus, Link2, BookOpen, Sparkles, Pencil, X, ArrowLeft, Crop, Loader2, LogOut, Settings } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -88,6 +88,17 @@ export function SideMenu() {
               <Sparkles size={16} strokeWidth={1.6} />
               Your moodboard
             </Link>
+
+            {user && !isGuest && (
+              <Link
+                to="/admin/import"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm text-ink transition-colors hover:bg-secondary"
+              >
+                <Settings size={16} strokeWidth={1.6} />
+                Settings · Bulk import
+              </Link>
+            )}
 
             <button
               type="button"
