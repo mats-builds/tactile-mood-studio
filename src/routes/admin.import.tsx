@@ -337,9 +337,6 @@ function BulkImportPage() {
 
   const pickField = (row: Record<string, string>, candidates: string[]): string => {
     const keys = Object.keys(row);
-    for (const cand in candidates) {
-      // noop placeholder to satisfy lint about unused index — replaced below.
-    }
     for (const c of candidates) {
       const hit = keys.find((k) => k.toLowerCase() === c.toLowerCase());
       if (hit && row[hit]) return row[hit];
