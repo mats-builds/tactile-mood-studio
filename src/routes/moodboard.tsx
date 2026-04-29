@@ -10,6 +10,7 @@ import {
   type Palette,
   type Scene,
 } from "@/data/catalog";
+import { allBrandProducts } from "@/data/brands";
 import { useSelection } from "@/store/selection";
 import { useUserProducts } from "@/store/user-products";
 import { useUserRooms } from "@/store/user-rooms";
@@ -55,7 +56,7 @@ function MoodboardPage() {
   };
 
   const items = useMemo(() => {
-    const merged = [...userProducts, ...catalog];
+    const merged = [...userProducts, ...allBrandProducts, ...catalog];
     return ids
       .map((id) => merged.find((p) => p.id === id))
       .filter(Boolean) as typeof catalog;
