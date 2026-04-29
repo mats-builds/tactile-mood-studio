@@ -188,7 +188,7 @@ function BulkImportPage() {
     const cat = inferCategory(p.category);
     const role = inferRole(cat);
     return {
-      id: `import-${p.id.slice(0, 8)}`,
+      id: p.id,
       name: p.name,
       maker: p.maker ?? "—",
       price: p.price != null ? `€ ${Number(p.price).toLocaleString("nl-NL")}` : "—",
@@ -690,7 +690,7 @@ function BulkImportPage() {
         onToggle={() => {
           // From the detail overlay "Add to board" triggers a save-as-is.
           if (!detail) return;
-          const match = products.find((x) => `import-${x.id.slice(0, 8)}` === detail.id);
+          const match = products.find((x) => x.id === detail.id);
           if (match) saveDirect(match);
           setDetail(null);
         }}
