@@ -285,8 +285,25 @@ function BulkImportPage() {
   }, [job]);
 
   // ---- CSV import ----
+  const detectDelimiter = (text: string): "," | ";" | "\t" => {
+    const sample = text
+      .replace(/^\uFEFF/, "")
+      .split(/\r?\n/)
+      .find((line) => line.trim().length > 0) ?? "";
+
+    const candidates: Array<"," | ";" | "\t"> = [",", ";", "\t"];
+    const scored = candidates.map((delimiter) => ({
+      delimiter,
+      count: sample.split(delimiter).length,
+    }));
+
+    return scored.sort((a, b) => b.count - a.count)[0]?.delimiter ?? ",";
+  };
+
   const parseCsv = (text: string): Record<string, string>[] => {
-    // Minimal RFC4180-ish parser supporting quoted fields, commas, and escaped "" quotes.
+    const delimiter = detectDelimiter(text);
+    // Minimal RFC4180-ish parser supporting quoted fields, auto-detected separators,
+    // and escaped "" quotes.
     const rows: string[][] = [];
     let row: string[] = [];
     let cur = "";
@@ -306,7 +323,7 @@ function BulkImportPage() {
         }
       } else {
         if (c === '"') inQuotes = true;
-        else if (c === ",") {
+        else if (c === delimiter) {
           row.push(cur);
           cur = "";
         } else if (c === "\n" || c === "\r") {
@@ -325,7 +342,7 @@ function BulkImportPage() {
       if (row.some((v) => v.length > 0)) rows.push(row);
     }
     if (rows.length < 2) return [];
-    const headers = rows[0].map((h) => h.trim());
+    const headers = rows[0].map((h) => h.replace(/^\uFEFF/, "").trim());
     return rows.slice(1).map((r) => {
       const obj: Record<string, string> = {};
       headers.forEach((h, i) => {
@@ -349,6 +366,15 @@ function BulkImportPage() {
     setCsvSummary(null);
     setCsvBusy(true);
     try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session?.user) {
+        setErrorText("Please sign in to import products into your catalog.");
+        return;
+      }
+
       const text = await file.text();
       const rows = parseCsv(text);
       if (rows.length === 0) {
@@ -376,9 +402,14 @@ function BulkImportPage() {
             "Description",
             "Beschrijving",
           ]);
-          const price = priceRaw
-            ? Number(priceRaw.replace(/[^0-9,.-]/g, "").replace(",", "."))
-            : null;
+          const normalizedPrice = priceRaw
+            ? priceRaw
+                .replace(/\s/g, "")
+                .replace(/€/g, "")
+                .replace(/\.(?=\d{3}(\D|$))/g, "")
+                .replace(",", ".")
+            : "";
+          const price = normalizedPrice ? Number(normalizedPrice.replace(/[^0-9.-]/g, "")) : null;
           return {
             name,
             source_url,
