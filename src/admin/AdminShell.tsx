@@ -43,12 +43,19 @@ export function AdminShell({ children }: { children: ReactNode }) {
         className="sticky top-0 hidden h-screen w-64 flex-col border-r border-black/5 p-6 backdrop-blur-xl md:flex"
         style={{ background: "rgba(255,255,255,0.55)" }}
       >
-        <div className="mb-10">
+        <div className="mb-6">
           <div className="text-[10px] uppercase tracking-[0.32em] text-black/50">Supermoods</div>
           <div className="font-serif text-2xl leading-none mt-2" style={{ fontFamily: "'Playfair Display', 'Cormorant Garamond', serif" }}>
             Atelier
           </div>
         </div>
+
+        <Link
+          to="/"
+          className="mb-6 flex items-center gap-2 rounded-xl border border-black/10 bg-white/60 px-3 py-2.5 text-sm font-medium text-black transition-all hover:bg-white hover:shadow-sm"
+        >
+          <ArrowLeft size={14} /> Back to app
+        </Link>
 
         <nav className="flex flex-col gap-1">
           {nav.map((n) => {
@@ -74,12 +81,6 @@ export function AdminShell({ children }: { children: ReactNode }) {
         </nav>
 
         <div className="mt-auto">
-          <Link
-            to="/"
-            className="mb-2 flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-sm text-black/70 transition-colors hover:bg-black/5 hover:text-black"
-          >
-            <ArrowLeft size={14} /> Back to app
-          </Link>
           <button
             onClick={() => {
               logout();
