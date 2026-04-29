@@ -13,7 +13,7 @@ import {
 import { useSelection } from "@/store/selection";
 import { useUserProducts } from "@/store/user-products";
 import { RoomScene } from "@/components/RoomScene";
-import { LeadCaptureDialog, getStoredLead, type Lead } from "@/components/LeadCaptureDialog";
+import { LeadCaptureDialog, type Lead } from "@/components/LeadCaptureDialog";
 
 export const Route = createFileRoute("/present")({
   component: PresentPage,
