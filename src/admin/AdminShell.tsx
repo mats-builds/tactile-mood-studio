@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
-import { BarChart3, Users, Package, LogOut, Sparkles, Download } from "lucide-react";
+import { BarChart3, Users, Package, LogOut, Sparkles, Download, ArrowLeft } from "lucide-react";
 import { isAdminAuthed, logout, tryLogin } from "./auth";
 
 type NavItem = {
@@ -74,6 +74,12 @@ export function AdminShell({ children }: { children: ReactNode }) {
         </nav>
 
         <div className="mt-auto">
+          <Link
+            to="/"
+            className="mb-2 flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-sm text-black/70 transition-colors hover:bg-black/5 hover:text-black"
+          >
+            <ArrowLeft size={14} /> Back to app
+          </Link>
           <button
             onClick={() => {
               logout();
@@ -99,6 +105,13 @@ export function AdminShell({ children }: { children: ReactNode }) {
           Atelier
         </div>
         <div className="flex gap-1">
+          <Link
+            to="/"
+            className="rounded-lg p-2 text-black/70"
+            aria-label="Back to app"
+          >
+            <ArrowLeft size={16} />
+          </Link>
           {nav.map((n) => {
             const active = n.exact
               ? location.pathname === n.to
