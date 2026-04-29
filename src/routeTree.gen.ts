@@ -14,6 +14,7 @@ import { Route as MoodboardRouteImport } from './routes/moodboard'
 import { Route as BrandsRouteImport } from './routes/brands'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as BrandsIndexRouteImport } from './routes/brands.index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as BrandsSlugRouteImport } from './routes/brands.$slug'
 import { Route as AdminLeadsRouteImport } from './routes/admin.leads'
@@ -44,6 +45,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const BrandsIndexRoute = BrandsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => BrandsRoute,
 } as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
@@ -82,10 +88,10 @@ export interface FileRoutesByFullPath {
   '/admin/leads': typeof AdminLeadsRoute
   '/brands/$slug': typeof BrandsSlugRoute
   '/admin/': typeof AdminIndexRoute
+  '/brands/': typeof BrandsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/brands': typeof BrandsRouteWithChildren
   '/moodboard': typeof MoodboardRoute
   '/present': typeof PresentRoute
   '/admin/catalog': typeof AdminCatalogRoute
@@ -93,6 +99,7 @@ export interface FileRoutesByTo {
   '/admin/leads': typeof AdminLeadsRoute
   '/brands/$slug': typeof BrandsSlugRoute
   '/admin': typeof AdminIndexRoute
+  '/brands': typeof BrandsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -106,6 +113,7 @@ export interface FileRoutesById {
   '/admin/leads': typeof AdminLeadsRoute
   '/brands/$slug': typeof BrandsSlugRoute
   '/admin/': typeof AdminIndexRoute
+  '/brands/': typeof BrandsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -120,10 +128,10 @@ export interface FileRouteTypes {
     | '/admin/leads'
     | '/brands/$slug'
     | '/admin/'
+    | '/brands/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/brands'
     | '/moodboard'
     | '/present'
     | '/admin/catalog'
@@ -131,6 +139,7 @@ export interface FileRouteTypes {
     | '/admin/leads'
     | '/brands/$slug'
     | '/admin'
+    | '/brands'
   id:
     | '__root__'
     | '/'
@@ -143,6 +152,7 @@ export interface FileRouteTypes {
     | '/admin/leads'
     | '/brands/$slug'
     | '/admin/'
+    | '/brands/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -189,6 +199,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/brands/': {
+      id: '/brands/'
+      path: '/'
+      fullPath: '/brands/'
+      preLoaderRoute: typeof BrandsIndexRouteImport
+      parentRoute: typeof BrandsRoute
     }
     '/admin/': {
       id: '/admin/'
@@ -246,10 +263,12 @@ const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 interface BrandsRouteChildren {
   BrandsSlugRoute: typeof BrandsSlugRoute
+  BrandsIndexRoute: typeof BrandsIndexRoute
 }
 
 const BrandsRouteChildren: BrandsRouteChildren = {
   BrandsSlugRoute: BrandsSlugRoute,
+  BrandsIndexRoute: BrandsIndexRoute,
 }
 
 const BrandsRouteWithChildren =
