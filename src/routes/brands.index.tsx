@@ -4,7 +4,7 @@ import { SideMenu } from "@/components/SideMenu";
 import { brands } from "@/data/brands";
 import { useSelection } from "@/store/selection";
 
-export const Route = createFileRoute("/brands")({
+export const Route = createFileRoute("/brands/")({
   component: BrandsPage,
   head: () => ({
     meta: [
