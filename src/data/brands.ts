@@ -1,11 +1,13 @@
 import { demoCatalog } from "./demo-catalog";
 import type { Product } from "./catalog";
+import { deMachinekamerProducts } from "./brand-de-machinekamer-products";
 import maisonNord from "@/assets/brand-maison-nord.jpg";
 import studioPalerma from "@/assets/brand-studio-palerma.jpg";
 import atelierDion from "@/assets/brand-atelier-dion.jpg";
 import northwood from "@/assets/brand-northwood.jpg";
 import casaReni from "@/assets/brand-casa-reni.jpg";
 import ceramicaVera from "@/assets/brand-ceramica-vera.jpg";
+import deMachinekamer from "@/assets/brand-de-machinekamer.jpg";
 
 export type Brand = {
   slug: string;
@@ -20,10 +22,14 @@ export type Brand = {
   logo: string;
   /** number of pieces line shown on the tile (e.g. "EUR 850" placement) */
   pieceCount: number;
-  /** which makers from demoCatalog count as this brand's stock */
-  makers: string[];
-  /** id-prefix used to clone demoCatalog items into branded SKUs */
-  brandPrefix: string;
+  /** which makers from demoCatalog count as this brand's stock (for demo brands) */
+  makers?: string[];
+  /** id-prefix used to clone demoCatalog items into branded SKUs (for demo brands) */
+  brandPrefix?: string;
+  /** explicit hardcoded product list (used by real partner brands) */
+  products?: Product[];
+  /** when true, the logo image should be contained (wordmark) instead of covering the tile */
+  logoFit?: "cover" | "contain";
 };
 
 const RAW_BRANDS: Omit<Brand, "pieceCount">[] = [
@@ -93,6 +99,17 @@ const RAW_BRANDS: Omit<Brand, "pieceCount">[] = [
     makers: ["Ceramica Vera", "Hanssen Workshop"],
     brandPrefix: "ceramica-vera",
   },
+  {
+    slug: "de-machinekamer",
+    name: "De Machinekamer",
+    tagline: "Tables & Seating · Netherlands",
+    origin: "Purmerend, NL",
+    description:
+      "Dutch makers of solid-wood dining tables, fauteuils and the iconic De Purmer chair. A Supermoods preferred partner — current stock is loaded directly from De Machinekamer's catalog and ships across the Benelux.",
+    logo: deMachinekamer,
+    logoFit: "contain",
+    products: deMachinekamerProducts,
+  },
 ];
 
 /** Build a branded SKU clone of a base demo product so brand catalogs feel distinct. */
@@ -106,12 +123,13 @@ function clone(p: Product, brand: Omit<Brand, "pieceCount">): Product {
 
 /** Map of brand slug → products available in that brand catalog. */
 export const brandProducts: Record<string, Product[]> = Object.fromEntries(
-  RAW_BRANDS.map((b) => [
-    b.slug,
-    demoCatalog
-      .filter((p) => b.makers.includes(p.maker))
-      .map((p) => clone(p, b)),
-  ]),
+  RAW_BRANDS.map((b) => {
+    if (b.products) return [b.slug, b.products];
+    const list = demoCatalog
+      .filter((p) => b.makers?.includes(p.maker))
+      .map((p) => clone(p, b));
+    return [b.slug, list];
+  }),
 );
 
 export const brands: Brand[] = RAW_BRANDS.map((b) => ({
