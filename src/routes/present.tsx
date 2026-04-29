@@ -32,14 +32,9 @@ function PresentPage() {
   const togglePage = (id: string) =>
     setHidden((h) => ({ ...h, [id]: !h[id] }));
   const [leadOpen, setLeadOpen] = useState(false);
-  const [sentTo, setSentTo] = useState<Lead | null>(() => getStoredLead());
+  const [sentTo, setSentTo] = useState<Lead | null>(null);
 
   const handleSend = () => {
-    const existing = getStoredLead();
-    if (existing) {
-      setSentTo(existing);
-      return;
-    }
     setLeadOpen(true);
   };
 
