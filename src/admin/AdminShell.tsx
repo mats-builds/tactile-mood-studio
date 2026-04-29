@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
-import { BarChart3, Users, Package, LogOut, Sparkles, Download, ArrowLeft } from "lucide-react";
+import { BarChart3, Users, Package, LogOut, Sparkles, Download, ArrowLeft, Building2 } from "lucide-react";
 import { isAdminAuthed, logout, tryLogin } from "./auth";
 
 type NavItem = {
@@ -15,6 +15,7 @@ const nav: NavItem[] = [
   { to: "/admin/leads", label: "Lead Feed", icon: Users },
   { to: "/admin/catalog", label: "Catalog", icon: Package },
   { to: "/admin/import", label: "Bulk Import", icon: Download },
+  { to: "/brands", label: "Brand catalogs", icon: Building2 },
 ];
 
 export function AdminShell({ children }: { children: ReactNode }) {
