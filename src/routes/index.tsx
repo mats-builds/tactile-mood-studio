@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Search, Plus, Check, X, ArrowRight } from "lucide-react";
+import { Search, Plus, Check, X, ArrowRight, Building2 } from "lucide-react";
 import { catalog, categories, type Category, type Product } from "@/data/catalog";
 import { useSelection } from "@/store/selection";
 import { ProductDetail } from "@/components/ProductDetail";
@@ -135,6 +135,13 @@ function CatalogPage() {
               </button>
             );
           })}
+          <Link
+            to="/brands"
+            className="inline-flex items-center gap-1.5 rounded-full border border-rust/40 bg-rust/5 px-4 py-1.5 text-[11px] uppercase tracking-[0.2em] text-rust transition-colors hover:bg-rust hover:text-primary-foreground"
+          >
+            <Building2 size={12} strokeWidth={1.8} />
+            Brand catalogs
+          </Link>
           <span className="ml-auto text-xs text-muted-foreground">
             {items.length} {items.length === 1 ? "piece" : "pieces"}
           </span>
