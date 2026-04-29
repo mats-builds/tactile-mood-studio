@@ -89,7 +89,9 @@ function BrandsPage() {
                   loading="lazy"
                   width={768}
                   height={768}
-                  className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                  className={`absolute inset-0 h-full w-full transition-transform duration-500 group-hover:scale-[1.03] ${
+                    b.logoFit === "contain" ? "object-contain p-6" : "object-cover"
+                  }`}
                 />
                 <span
                   aria-hidden

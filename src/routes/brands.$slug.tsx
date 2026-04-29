@@ -117,7 +117,9 @@ function BrandDetailPage() {
               alt={`${brand.name} logo`}
               width={768}
               height={768}
-              className="h-full w-full object-cover"
+              className={`h-full w-full ${
+                brand.logoFit === "contain" ? "object-contain p-6" : "object-cover"
+              }`}
             />
           </div>
           <div>
