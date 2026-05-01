@@ -8,6 +8,7 @@ import { userProductsStore } from "@/store/user-products";
 import { useSelection } from "@/store/selection";
 import { toast } from "sonner";
 import { trimTransparentEdges } from "@/lib/alpha-cutout";
+import JSZip from "jszip";
 
 export const Route = createFileRoute("/3d-test")({
   component: ThreeDTestPage,
