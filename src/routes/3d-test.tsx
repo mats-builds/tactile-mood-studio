@@ -31,6 +31,7 @@ function ThreeDTestPage() {
   const [loading, setLoading] = useState(false);
   const [hasModel, setHasModel] = useState(false);
   const [bgTransparent, setBgTransparent] = useState(true);
+  const blobUrlsRef = useRef<string[]>([]);
   const navigate = useNavigate();
   const { has, toggle } = useSelection();
 
