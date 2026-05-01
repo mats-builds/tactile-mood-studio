@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { ColladaLoader } from "three/examples/jsm/loaders/ColladaLoader.js";
-import { ArrowLeft, Upload, Camera, RotateCcw, Sparkles, Box } from "lucide-react";
+import { ArrowLeft, Upload, Camera, RotateCcw, Sparkles, Box, Library } from "lucide-react";
 import { userProductsStore } from "@/store/user-products";
 import { useSelection } from "@/store/selection";
 import { toast } from "sonner";
@@ -282,9 +282,10 @@ function ThreeDTestPage() {
       }
     }
     const id = `3d-${Date.now()}`;
+    const cleanName = fileName?.replace(/\.(dae|zip)$/i, "") || "3D piece";
     const product = {
       id,
-      name: fileName?.replace(/\.dae$/i, "") || "3D piece",
+      name: cleanName,
       maker: "3D import",
       price: "",
       category: "Decor" as const,
@@ -298,9 +299,17 @@ function ThreeDTestPage() {
       toast.error("Sign in (or use guest mode) to save the snapshot");
       return;
     }
+    // Add to the moodboard selection so it's already on the board, but
+    // don't auto-navigate — the user usually wants to take a few angles
+    // and pick the best one.
     if (!has(id)) toggle(id);
-    toast.success("Snapshot added to your moodboard");
-    setTimeout(() => navigate({ to: "/moodboard" }), 400);
+    toast.success(`"${cleanName}" added to your library & board`, {
+      description: "Capture another angle, or open the catalog / board to use it.",
+      action: {
+        label: "Open catalog",
+        onClick: () => navigate({ to: "/" }),
+      },
+    });
   }
 
   return (
@@ -420,8 +429,22 @@ function ThreeDTestPage() {
               disabled={!hasModel}
               className="inline-flex items-center justify-center gap-2 rounded-full bg-rust px-4 py-3 text-[11px] uppercase tracking-[0.2em] text-primary-foreground transition-transform hover:scale-[1.01] disabled:scale-100 disabled:opacity-40"
             >
-              <Camera size={14} /> Capture to moodboard
+              <Camera size={14} /> Capture to library
             </button>
+            <div className="flex gap-2">
+              <Link
+                to="/"
+                className="inline-flex flex-1 items-center justify-center gap-2 rounded-full border border-border bg-background px-3 py-2 text-[10px] uppercase tracking-[0.18em] text-ink transition-colors hover:bg-secondary"
+              >
+                <Library size={12} /> Catalog
+              </Link>
+              <Link
+                to="/moodboard"
+                className="inline-flex flex-1 items-center justify-center gap-2 rounded-full border border-border bg-background px-3 py-2 text-[10px] uppercase tracking-[0.18em] text-ink transition-colors hover:bg-secondary"
+              >
+                <Box size={12} /> Board
+              </Link>
+            </div>
           </div>
 
           <div className="rounded-2xl bg-secondary/50 p-4">
