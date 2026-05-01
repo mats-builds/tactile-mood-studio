@@ -13,6 +13,7 @@ import { Route as PresentRouteImport } from './routes/present'
 import { Route as MoodboardRouteImport } from './routes/moodboard'
 import { Route as BrandsRouteImport } from './routes/brands'
 import { Route as AdminRouteImport } from './routes/admin'
+import { Route as R3dTestRouteImport } from './routes/3d-test'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BrandsIndexRouteImport } from './routes/brands.index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
@@ -39,6 +40,11 @@ const BrandsRoute = BrandsRouteImport.update({
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const R3dTestRoute = R3dTestRouteImport.update({
+  id: '/3d-test',
+  path: '/3d-test',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -79,6 +85,7 @@ const AdminCatalogRoute = AdminCatalogRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/3d-test': typeof R3dTestRoute
   '/admin': typeof AdminRouteWithChildren
   '/brands': typeof BrandsRouteWithChildren
   '/moodboard': typeof MoodboardRoute
@@ -92,6 +99,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/3d-test': typeof R3dTestRoute
   '/moodboard': typeof MoodboardRoute
   '/present': typeof PresentRoute
   '/admin/catalog': typeof AdminCatalogRoute
@@ -104,6 +112,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/3d-test': typeof R3dTestRoute
   '/admin': typeof AdminRouteWithChildren
   '/brands': typeof BrandsRouteWithChildren
   '/moodboard': typeof MoodboardRoute
@@ -119,6 +128,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/3d-test'
     | '/admin'
     | '/brands'
     | '/moodboard'
@@ -132,6 +142,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/3d-test'
     | '/moodboard'
     | '/present'
     | '/admin/catalog'
@@ -143,6 +154,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/3d-test'
     | '/admin'
     | '/brands'
     | '/moodboard'
@@ -157,6 +169,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  R3dTestRoute: typeof R3dTestRoute
   AdminRoute: typeof AdminRouteWithChildren
   BrandsRoute: typeof BrandsRouteWithChildren
   MoodboardRoute: typeof MoodboardRoute
@@ -191,6 +204,13 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/3d-test': {
+      id: '/3d-test'
+      path: '/3d-test'
+      fullPath: '/3d-test'
+      preLoaderRoute: typeof R3dTestRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -276,6 +296,7 @@ const BrandsRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  R3dTestRoute: R3dTestRoute,
   AdminRoute: AdminRouteWithChildren,
   BrandsRoute: BrandsRouteWithChildren,
   MoodboardRoute: MoodboardRoute,
@@ -284,12 +305,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}
