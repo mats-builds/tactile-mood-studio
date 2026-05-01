@@ -317,7 +317,7 @@ function ThreeDTestPage() {
           <h1 className="font-serif text-xl text-ink">3D piece — test bench</h1>
         </div>
         <span className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
-          Collada (.dae) · session only
+          Collada (.dae or .zip) · session only
         </span>
       </header>
 
@@ -355,14 +355,15 @@ function ThreeDTestPage() {
           <label className="flex cursor-pointer flex-col items-start gap-2 rounded-2xl border border-dashed border-border bg-secondary/40 p-5 transition-colors hover:border-ink hover:bg-secondary">
             <div className="flex items-center gap-2 text-ink">
               <Upload size={16} />
-              <span className="text-sm font-medium">Upload .dae</span>
+              <span className="text-sm font-medium">Upload .dae or .zip</span>
             </div>
             <p className="text-[11px] text-muted-foreground">
-              Collada XML, exported from SketchUp (File → Export → 3D Model → .dae).
+              Collada XML from SketchUp (File → Export → 3D Model → .dae). Zip the
+              .dae together with its texture folder to keep materials.
             </p>
             <input
               type="file"
-              accept=".dae,model/vnd.collada+xml,application/xml,text/xml"
+              accept=".dae,.zip,model/vnd.collada+xml,application/xml,text/xml,application/zip"
               className="hidden"
               onChange={(e) => {
                 const f = e.target.files?.[0];
