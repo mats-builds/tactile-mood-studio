@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Menu, Plus, Link2, BookOpen, Sparkles, Pencil, X, ArrowLeft, Crop, Loader2, LogOut, Settings, Building2 } from "lucide-react";
+import { Menu, Plus, Link2, BookOpen, Sparkles, Pencil, X, ArrowLeft, Crop, Loader2, LogOut, Settings, Building2, Box } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -97,6 +97,18 @@ export function SideMenu() {
               Brand catalogs
               <span className="ml-auto rounded-full bg-rust/10 px-2 py-0.5 text-[9px] uppercase tracking-[0.18em] text-rust">
                 For designers
+              </span>
+            </Link>
+
+            <Link
+              to="/3d-test"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm text-ink transition-colors hover:bg-secondary"
+            >
+              <Box size={16} strokeWidth={1.6} />
+              3D piece test
+              <span className="ml-auto rounded-full bg-secondary px-2 py-0.5 text-[9px] uppercase tracking-[0.18em] text-muted-foreground">
+                Beta
               </span>
             </Link>
 
