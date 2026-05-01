@@ -8,6 +8,7 @@ import { userProductsStore } from "@/store/user-products";
 import { useSelection } from "@/store/selection";
 import { toast } from "sonner";
 import { trimTransparentEdges } from "@/lib/alpha-cutout";
+import JSZip from "jszip";
 
 export const Route = createFileRoute("/3d-test")({
   component: ThreeDTestPage,
@@ -30,6 +31,7 @@ function ThreeDTestPage() {
   const [loading, setLoading] = useState(false);
   const [hasModel, setHasModel] = useState(false);
   const [bgTransparent, setBgTransparent] = useState(true);
+  const blobUrlsRef = useRef<string[]>([]);
   const navigate = useNavigate();
   const { has, toggle } = useSelection();
 
@@ -133,6 +135,9 @@ function ThreeDTestPage() {
     });
     modelRef.current = null;
     setHasModel(false);
+    // Revoke any blob URLs created for textures in a previous zip load.
+    blobUrlsRef.current.forEach((u) => URL.revokeObjectURL(u));
+    blobUrlsRef.current = [];
   }
 
   function frameObject(obj: THREE.Object3D) {
@@ -161,17 +166,73 @@ function ThreeDTestPage() {
 
   async function handleFile(file: File) {
     const lower = file.name.toLowerCase();
-    if (!lower.endsWith(".dae")) {
-      toast.error("Please upload a Collada (.dae) file");
+    const isDae = lower.endsWith(".dae");
+    const isZip = lower.endsWith(".zip");
+    if (!isDae && !isZip) {
+      toast.error("Upload a .dae file or a .zip containing one");
       return;
     }
     setLoading(true);
     setFileName(file.name);
     try {
-      const text = await file.text();
-      const loader = new ColladaLoader();
-      // baseUrl empty — texture refs will fail gracefully
-      const result = loader.parse(text, "");
+      let daeText: string;
+      // Map of "relative/path/in/zip" → blob: URL, used to resolve texture refs.
+      const resourceMap = new Map<string, string>();
+
+      if (isZip) {
+        const zip = await JSZip.loadAsync(file);
+        const daeEntry = Object.values(zip.files).find(
+          (f) => !f.dir && f.name.toLowerCase().endsWith(".dae"),
+        );
+        if (!daeEntry) {
+          toast.error("No .dae file found inside the zip");
+          return;
+        }
+        daeText = await daeEntry.async("string");
+        const daeDir = daeEntry.name.includes("/")
+          ? daeEntry.name.slice(0, daeEntry.name.lastIndexOf("/") + 1)
+          : "";
+        // Build blob URLs for every other file, keyed by their path RELATIVE to the .dae.
+        await Promise.all(
+          Object.values(zip.files).map(async (f) => {
+            if (f.dir || f === daeEntry) return;
+            const blob = await f.async("blob");
+            const url = URL.createObjectURL(blob);
+            blobUrlsRef.current.push(url);
+            // Key by both the full zip path and the path relative to the .dae,
+            // plus the bare filename, so however the .dae references it we can match.
+            resourceMap.set(f.name, url);
+            if (daeDir && f.name.startsWith(daeDir)) {
+              resourceMap.set(f.name.slice(daeDir.length), url);
+            }
+            const base = f.name.split("/").pop();
+            if (base) resourceMap.set(base, url);
+          }),
+        );
+      } else {
+        daeText = await file.text();
+      }
+
+      // Custom loading manager: rewrite any relative URL the ColladaLoader
+      // tries to fetch (textures, etc.) to the matching blob URL from the zip.
+      const manager = new THREE.LoadingManager();
+      manager.setURLModifier((url) => {
+        // Strip leading "./" and any base prefix three may have prepended.
+        const cleaned = url.replace(/^\.?\//, "");
+        const candidates = [
+          cleaned,
+          cleaned.split("/").pop() ?? cleaned,
+          decodeURIComponent(cleaned),
+          decodeURIComponent(cleaned.split("/").pop() ?? cleaned),
+        ];
+        for (const c of candidates) {
+          const hit = resourceMap.get(c);
+          if (hit) return hit;
+        }
+        return url;
+      });
+      const loader = new ColladaLoader(manager);
+      const result = loader.parse(daeText, "");
       if (!result || !result.scene) {
         toast.error("This .dae file has no scene");
         return;
@@ -256,7 +317,7 @@ function ThreeDTestPage() {
           <h1 className="font-serif text-xl text-ink">3D piece — test bench</h1>
         </div>
         <span className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
-          Collada (.dae) · session only
+          Collada (.dae or .zip) · session only
         </span>
       </header>
 
@@ -294,14 +355,15 @@ function ThreeDTestPage() {
           <label className="flex cursor-pointer flex-col items-start gap-2 rounded-2xl border border-dashed border-border bg-secondary/40 p-5 transition-colors hover:border-ink hover:bg-secondary">
             <div className="flex items-center gap-2 text-ink">
               <Upload size={16} />
-              <span className="text-sm font-medium">Upload .dae</span>
+              <span className="text-sm font-medium">Upload .dae or .zip</span>
             </div>
             <p className="text-[11px] text-muted-foreground">
-              Collada XML, exported from SketchUp (File → Export → 3D Model → .dae).
+              Collada XML from SketchUp (File → Export → 3D Model → .dae). Zip the
+              .dae together with its texture folder to keep materials.
             </p>
             <input
               type="file"
-              accept=".dae,model/vnd.collada+xml,application/xml,text/xml"
+              accept=".dae,.zip,model/vnd.collada+xml,application/xml,text/xml,application/zip"
               className="hidden"
               onChange={(e) => {
                 const f = e.target.files?.[0];
