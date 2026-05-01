@@ -31,7 +31,7 @@ function ThreeDTestPage() {
   const [hasModel, setHasModel] = useState(false);
   const [bgTransparent, setBgTransparent] = useState(true);
   const navigate = useNavigate();
-  const { add } = useSelection();
+  const { has, toggle } = useSelection();
 
   // Init three.js
   useEffect(() => {
@@ -172,6 +172,10 @@ function ThreeDTestPage() {
       const loader = new ColladaLoader();
       // baseUrl empty — texture refs will fail gracefully
       const result = loader.parse(text, "");
+      if (!result || !result.scene) {
+        toast.error("This .dae file has no scene");
+        return;
+      }
       const obj = result.scene;
       // Make double-sided so plates/single-sided faces don't go invisible
       obj.traverse((n) => {
@@ -233,7 +237,7 @@ function ThreeDTestPage() {
       toast.error("Sign in (or use guest mode) to save the snapshot");
       return;
     }
-    add(id);
+    if (!has(id)) toggle(id);
     toast.success("Snapshot added to your moodboard");
     setTimeout(() => navigate({ to: "/moodboard" }), 400);
   }
